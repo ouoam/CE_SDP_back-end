@@ -2,6 +2,7 @@ package main
 
 import (
 	"./db"
+	"./route"
 	"github.com/joho/godotenv"
 	"log"
 )
@@ -13,4 +14,5 @@ func main() {
 	}
 
 	db.Init()
+	route.Init()
 }
