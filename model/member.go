@@ -2,19 +2,20 @@ package model
 
 import (
 	"../db"
+	"gopkg.in/guregu/null.v3"
 )
 
 type Member struct {
-	ID           int	`json:"id"`
-	Name         string	`json:"name"`
-	Surname      string	`json:"surname"`
-	Username     string	`json:"username"`
-	Password     string	`json:"password"`
-	IdCard       uint64	`json:"id_card"`
-	Email        string	`json:"email"`
-	Verification uint8	`json:"verification"`
-	BankAccount  uint64	`json:"bank_account"`
-	Address      string	`json:"address"`
+	ID           int		`json:"id"`
+	Name         string		`json:"name"`
+	Surname      string		`json:"surname"`
+	Username     string		`json:"username"`
+	Password     string		`json:"password"`
+	IdCard       null.Int	`json:"id_card"`
+	Email        string		`json:"email"`
+	Verification null.Int	`json:"verification"`
+	BankAccount  null.Int	`json:"bank_account"`
+	Address      null.String`json:"address"`
 }
 
 func GetMember(id int) (*Member, error) {
