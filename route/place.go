@@ -42,14 +42,21 @@ func PlaceRoute(route *fiber.Group) {
 	})
 
 	route.Post("/", func(c *fiber.Ctx) {
-		place := model.Place{}
+		place := new(model.Place)
 
 		if err := c.BodyParser(&place); err != nil {
-			// Handle error
+			c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return
 		}
 
-		ID, _ := model.InsertPlace(place)
+		if err := model.InsertPlace(place); err != nil {
+			c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+			return
+		}
 
-		c.JSON(fiber.Map{"id": ID})
+		if err := c.JSON(result); err != nil {
+			c.Status(http.StatusInternalServerError).Send(err)
+			return
+		}
 	})
 }
