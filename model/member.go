@@ -11,16 +11,16 @@ import (
 )
 
 type Member struct {
-	ID           int		`json:"id" canUpdate:"f"`
-	Name         null.String`json:"name" canUpdate:"t"`
-	Surname      null.String`json:"surname" canUpdate:"t"`
-	Username     string		`json:"username" canUpdate:"f"`
-	Password     null.String`json:"password" canUpdate:"t"`
-	IdCard       null.Int	`json:"id_card" canUpdate:"t"`
-	Email        null.String`json:"email" canUpdate:"t"`
-	Verification null.Int	`json:"verification" canUpdate:"t"`
-	BankAccount  null.Int	`json:"bank_account" canUpdate:"t"`
-	Address      null.String`json:"address" canUpdate:"t"`
+	ID           int		`json:"id" dontUpdate:""`
+	Name         null.String`json:"name"`
+	Surname      null.String`json:"surname"`
+	Username     string		`json:"username" dontUpdate:""`
+	Password     null.String`json:"password"`
+	IdCard       null.Int	`json:"id_card"`
+	Email        null.String`json:"email"`
+	Verification null.Int	`json:"verification"`
+	BankAccount  null.Int	`json:"bank_account"`
+	Address      null.String`json:"address"`
 }
 
 var (
@@ -99,7 +99,7 @@ func UpdateMember(member *Member, id int) error {
 	stv := reflect.ValueOf(member).Elem()
 	for i := 0; i < stv.NumField(); i++ {
 		fieldType := stv.Type().Field(i)
-		if fieldType.Tag.Get("canUpdate") == "f" {
+		if _, have := fieldType.Tag.Lookup("dontUpdate"); have == true {
 			continue
 		}
 		field := stv.Field(i)
