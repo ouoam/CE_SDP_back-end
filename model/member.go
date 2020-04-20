@@ -106,19 +106,24 @@ func UpdateMember(member *Member, id int) error {
 		if !field.CanInterface() {
 			continue
 		}
-		switch v := field.Interface().(type) {
+
+		valid := false
+		v := field.Interface()
+
+		switch v := v.(type) {
 		case null.String:
 			if v.Valid {
-				sql += fieldType.Tag.Get("json") + " = $" + strconv.Itoa(count) + ", "
-				count++
-				val = append(val, v)
+				valid = true
 			}
 		case null.Int:
 			if v.Valid {
-				sql += fieldType.Tag.Get("json") + " = $" + strconv.Itoa(count) + ", "
-				count++
-				val = append(val, v)
+				valid = true
 			}
+		}
+		if valid {
+			sql += fieldType.Tag.Get("json") + " = $" + strconv.Itoa(count) + ", "
+			count++
+			val = append(val, v)
 		}
 	}
 
