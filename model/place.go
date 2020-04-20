@@ -21,7 +21,7 @@ func GetPlace(id int) (*Place, error) {
 	return place, nil
 }
 
-func InsertPlace(place *Place) error {
+func AddPlace(place *Place) error {
 	statement := `INSERT INTO public.place(name, pic, geo) VALUES($1, $2, $3) RETURNING id`
 	err := db.DB.QueryRow(statement, place.Name, place.Pic, place.Geo).Scan(&place.ID)
 

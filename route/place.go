@@ -49,12 +49,12 @@ func PlaceRoute(route *fiber.Group) {
 			return
 		}
 
-		if err := model.InsertPlace(place); err != nil {
+		if err := model.AddPlace(place); err != nil {
 			c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 			return
 		}
 
-		if err := c.JSON(result); err != nil {
+		if err := c.JSON(place); err != nil {
 			c.Status(http.StatusInternalServerError).Send(err)
 			return
 		}
