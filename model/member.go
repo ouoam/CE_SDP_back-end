@@ -15,7 +15,7 @@ type Member struct {
 	Name         null.String`json:"name"`
 	Surname      null.String`json:"surname"`
 	Username     string		`json:"username" dontUpdate:""`
-	Password     null.String`json:"password"`
+	Password     null.String`json:"password" dontReturn:""`
 	IdCard       null.Int	`json:"id_card"`
 	Email        null.String`json:"email"`
 	Verification null.Int	`json:"verification"`
@@ -92,52 +92,55 @@ func UpdateMember(member *Member, id int) error {
 		return err
 	}
 
-	var val []interface{}
-	var sql string
+	var updateVal []interface{}
+	var updateSQL string
+	var returnVal []interface{}
+	var returnSQL string
 	var count = 1
 
 	stv := reflect.ValueOf(member).Elem()
 	for i := 0; i < stv.NumField(); i++ {
 		fieldType := stv.Type().Field(i)
-		if _, have := fieldType.Tag.Lookup("dontUpdate"); have == true {
-			continue
-		}
 		field := stv.Field(i)
 		if !field.CanInterface() {
 			continue
 		}
+		v := field.Addr().Interface()
 
-		valid := false
-		v := field.Interface()
-
-		switch v := v.(type) {
-		case null.String:
-			if v.Valid {
-				valid = true
+		if _, have := fieldType.Tag.Lookup("dontUpdate"); !have {
+			valid := false
+			switch v := v.(type) {
+			case *null.String:
+				if v.Valid {
+					valid = true
+				}
+			case *null.Int:
+				if v.Valid {
+					valid = true
+				}
 			}
-		case null.Int:
-			if v.Valid {
-				valid = true
+			if valid {
+				updateSQL += fieldType.Tag.Get("json") + " = $" + strconv.Itoa(count) + ", "
+				count++
+				updateVal = append(updateVal, v)
 			}
 		}
-		if valid {
-			sql += fieldType.Tag.Get("json") + " = $" + strconv.Itoa(count) + ", "
-			count++
-			val = append(val, v)
+		if _, have := fieldType.Tag.Lookup("dontReturn"); !have {
+			returnSQL += fieldType.Tag.Get("json") + ", "
+			returnVal = append(returnVal, v)
 		}
 	}
 
 	if count == 1 {
 		return errors.New("No data to update")
 	}
-	sql = sql[:len(sql) - 2]
+	updateSQL = updateSQL[:len(updateSQL) - 2]
+	returnSQL = returnSQL[:len(returnSQL) - 2]
 
-	statement := "UPDATE public.member SET " + sql + " WHERE id=$" + strconv.Itoa(count) + ` 
-RETURNING id, name, surname, username, id_card, email, verification, bank_account, address`
-	val = append(val, id)
+	statement := "UPDATE public.member SET " + updateSQL + " WHERE id=$" + strconv.Itoa(count) + "RETURNING " + returnSQL
+	updateVal = append(updateVal, id)
 
-	err := db.DB.QueryRow(statement, val...).Scan(&member.ID, &member.Name, &member.Surname, &member.Username, &member.IdCard,
-		&member.Email, &member.Verification, &member.BankAccount, &member.Address)
+	err := db.DB.QueryRow(statement, updateVal...).Scan(returnVal...)
 	if err != nil {
 		return err
 	}
