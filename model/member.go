@@ -5,21 +5,22 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/guregu/null.v3"
+	"reflect"
 	"regexp"
 	"strconv"
 )
 
 type Member struct {
-	ID           int		`json:"id"`
-	Name         null.String`json:"name"`
-	Surname      null.String`json:"surname"`
-	Username     string		`json:"username"`
-	Password     null.String`json:"password"`
-	IdCard       null.Int	`json:"id_card"`
-	Email        null.String`json:"email"`
-	Verification null.Int	`json:"verification"`
-	BankAccount  null.Int	`json:"bank_account"`
-	Address      null.String`json:"address"`
+	ID           int		`json:"id" canUpdate:"f"`
+	Name         null.String`json:"name" canUpdate:"t"`
+	Surname      null.String`json:"surname" canUpdate:"t"`
+	Username     string		`json:"username" canUpdate:"f"`
+	Password     null.String`json:"password" canUpdate:"t"`
+	IdCard       null.Int	`json:"id_card" canUpdate:"t"`
+	Email        null.String`json:"email" canUpdate:"t"`
+	Verification null.Int	`json:"verification" canUpdate:"t"`
+	BankAccount  null.Int	`json:"bank_account" canUpdate:"t"`
+	Address      null.String`json:"address" canUpdate:"t"`
 }
 
 var (
@@ -93,62 +94,40 @@ func UpdateMember(member *Member, id int) error {
 
 	var val []interface{}
 	var sql string
-	var i = 1
+	var count = 1
 
-	if member.Name.Valid {
-		sql += "name = $" + strconv.Itoa(i) + ", "
-		i++
-		val = append(val, member.Name.String)
+	stv := reflect.ValueOf(member).Elem()
+	for i := 0; i < stv.NumField(); i++ {
+		fieldType := stv.Type().Field(i)
+		if fieldType.Tag.Get("canUpdate") == "f" {
+			continue
+		}
+		field := stv.Field(i)
+		if !field.CanInterface() {
+			continue
+		}
+		switch v := field.Interface().(type) {
+		case null.String:
+			if v.Valid {
+				sql += fieldType.Tag.Get("json") + " = $" + strconv.Itoa(count) + ", "
+				count++
+				val = append(val, v)
+			}
+		case null.Int:
+			if v.Valid {
+				sql += fieldType.Tag.Get("json") + " = $" + strconv.Itoa(count) + ", "
+				count++
+				val = append(val, v)
+			}
+		}
 	}
 
-	if member.Surname.Valid {
-		sql += "surname = $" + strconv.Itoa(i) + ", "
-		i++
-		val = append(val, member.Surname.String)
-	}
-
-	if member.Password.Valid {
-		sql += "password = $" + strconv.Itoa(i) + ", "
-		i++
-		val = append(val, member.Password.String)
-	}
-
-	if member.IdCard.Valid {
-		sql += "id_card = $" + strconv.Itoa(i) + ", "
-		i++
-		val = append(val, member.IdCard.Int64)
-	}
-
-	if member.Email.Valid {
-		sql += "email = $" + strconv.Itoa(i) + ", "
-		i++
-		val = append(val, member.Email.String)
-	}
-
-	if member.Verification.Valid {
-		sql += "verification = $" + strconv.Itoa(i) + ", "
-		i++
-		val = append(val, member.Verification.Int64)
-	}
-
-	if member.BankAccount.Valid {
-		sql += "bank_account = $" + strconv.Itoa(i) + ", "
-		i++
-		val = append(val, member.BankAccount.Int64)
-	}
-
-	if member.Address.Valid {
-		sql += "address = $" + strconv.Itoa(i) + ", "
-		i++
-		val = append(val, member.Address.String)
-	}
-
-	if i == 1 {
+	if count == 1 {
 		return errors.New("No data to update")
 	}
 	sql = sql[:len(sql) - 2]
 
-	statement := "UPDATE public.member SET " + sql + " WHERE id=$" + strconv.Itoa(i) + ` 
+	statement := "UPDATE public.member SET " + sql + " WHERE id=$" + strconv.Itoa(count) + ` 
 RETURNING id, name, surname, username, id_card, email, verification, bank_account, address`
 	val = append(val, id)
 
