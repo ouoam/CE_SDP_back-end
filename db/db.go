@@ -13,24 +13,22 @@ import (
 )
 
 //DB a pointer to sql database
-var DB *sql.DB
+var db *sql.DB
 
 //Init postgresql db
 func Init() {
+	var err error
 	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable ",
 		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASS"), os.Getenv("DB_DB"))
-	db, err := sql.Open("postgres", psqlInfo)
+	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}
 	// defer db.Close()
 
-	err = db.Ping()
-	if err != nil {
+	if err = db.Ping(); err != nil {
 		panic(err)
 	}
-
-	DB = db
 
 	fmt.Println("Successfully connected to database!")
 }
@@ -79,7 +77,7 @@ func AddData(data interface{}) (int64, error) {
 	statement += "VALUES (" + insertSqlVal + ") RETURNING id"
 
 	var id int64
-	err := DB.QueryRow(statement, insertVal...).Scan(&id)
+	err := db.QueryRow(statement, insertVal...).Scan(&id)
 
 	return id, err
 }
@@ -117,7 +115,7 @@ func GetData(id int, data interface{}) error {
 	getSQL = getSQL[:len(getSQL) - 2]
 
 	statement := "SELECT " + getSQL + " FROM public." + strings.ToLower(reflect.TypeOf(data).Elem().Name()) + " WHERE id = $1"
-	err := DB.QueryRow(statement, id).Scan(returnVal...)
+	err := db.QueryRow(statement, id).Scan(returnVal...)
 
 	return err
 }
@@ -163,13 +161,18 @@ func UpdateDate(id int, data interface{}) error {
 	if count == 1 {
 		return errors.New("No data to update")
 	}
-	updateSQL = updateSQL[:len(updateSQL) - 2]
-	returnSQL = returnSQL[:len(returnSQL) - 2]
 
-	statement := "UPDATE public." + strings.ToLower(reflect.TypeOf(data).Elem().Name()) + " SET " + updateSQL
-	statement += " WHERE id=$" + strconv.Itoa(count) + "RETURNING " + returnSQL
+	statement := "UPDATE public." + strings.ToLower(reflect.TypeOf(data).Elem().Name())
+	statement += " SET " + updateSQL[:len(updateSQL) - 2]
+	statement += " WHERE id=$" + strconv.Itoa(count)
 	updateVal = append(updateVal, id)
 
-	err := DB.QueryRow(statement, updateVal...).Scan(returnVal...)
+	if len(returnSQL) != 0 {
+		statement += " RETURNING " + returnSQL[:len(returnSQL)-2]
+		err := db.QueryRow(statement, updateVal...).Scan(returnVal...)
+		return err
+	}
+
+	_, err := db.Exec(statement, updateVal...)
 	return err
 }
