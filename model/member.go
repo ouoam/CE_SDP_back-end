@@ -9,11 +9,11 @@ import (
 )
 
 type Member struct {
-	ID           int		`json:"id" dontUpdate:""`
+	ID           int		`json:"id" dont:"cu"`
 	Name         null.String`json:"name"`
 	Surname      null.String`json:"surname"`
-	Username     string		`json:"username" dontUpdate:""`
-	Password     null.String`json:"password" dontReturn:""`
+	Username     string		`json:"username" dont:"u"`
+	Password     null.String`json:"password" dont:"r"`
 	IdCard       null.Int	`json:"id_card"`
 	Email        null.String`json:"email"`
 	Verification null.Int	`json:"verification"`

@@ -50,26 +50,24 @@ func UpdateDate(id int, data interface{}) error {
 			continue
 		}
 		v := field.Addr().Interface()
-
-		if _, have := fieldType.Tag.Lookup("dontUpdate"); !have {
-			valid := false
-			switch v := v.(type) {
-			case *null.String:
-				if v.Valid {
-					valid = true
-				}
-			case *null.Int:
-				if v.Valid {
-					valid = true
-				}
+		val, have := fieldType.Tag.Lookup("dont")
+		valid := false
+		switch v := v.(type) {
+		case *null.String:
+			if v.Valid {
+				valid = true
 			}
-			if valid {
-				updateSQL += fieldType.Tag.Get("json") + " = $" + strconv.Itoa(count) + ", "
-				count++
-				updateVal = append(updateVal, v)
+		case *null.Int:
+			if v.Valid {
+				valid = true
 			}
 		}
-		if _, have := fieldType.Tag.Lookup("dontReturn"); !have {
+		if valid && (!have || (have && strings.Contains(val, "u"))) {
+			updateSQL += fieldType.Tag.Get("json") + " = $" + strconv.Itoa(count) + ", "
+			count++
+			updateVal = append(updateVal, v)
+		}
+		if !valid && (!have || (have && strings.Contains(val, "r"))) {
 			returnSQL += fieldType.Tag.Get("json") + ", "
 			returnVal = append(returnVal, v)
 		}
