@@ -5,9 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/guregu/null.v3"
-	"reflect"
 	"regexp"
-	"strconv"
 )
 
 type Member struct {
@@ -92,56 +90,7 @@ func UpdateMember(member *Member, id int) error {
 		return err
 	}
 
-	var updateVal []interface{}
-	var updateSQL string
-	var returnVal []interface{}
-	var returnSQL string
-	var count = 1
-
-	stv := reflect.ValueOf(member).Elem()
-	for i := 0; i < stv.NumField(); i++ {
-		fieldType := stv.Type().Field(i)
-		field := stv.Field(i)
-		if !field.CanInterface() {
-			continue
-		}
-		v := field.Addr().Interface()
-
-		if _, have := fieldType.Tag.Lookup("dontUpdate"); !have {
-			valid := false
-			switch v := v.(type) {
-			case *null.String:
-				if v.Valid {
-					valid = true
-				}
-			case *null.Int:
-				if v.Valid {
-					valid = true
-				}
-			}
-			if valid {
-				updateSQL += fieldType.Tag.Get("json") + " = $" + strconv.Itoa(count) + ", "
-				count++
-				updateVal = append(updateVal, v)
-			}
-		}
-		if _, have := fieldType.Tag.Lookup("dontReturn"); !have {
-			returnSQL += fieldType.Tag.Get("json") + ", "
-			returnVal = append(returnVal, v)
-		}
-	}
-
-	if count == 1 {
-		return errors.New("No data to update")
-	}
-	updateSQL = updateSQL[:len(updateSQL) - 2]
-	returnSQL = returnSQL[:len(returnSQL) - 2]
-
-	statement := "UPDATE public.member SET " + updateSQL + " WHERE id=$" + strconv.Itoa(count) + "RETURNING " + returnSQL
-	updateVal = append(updateVal, id)
-
-	err := db.DB.QueryRow(statement, updateVal...).Scan(returnVal...)
-	if err != nil {
+	if err := db.UpdateDate(id, member); err != nil {
 		return err
 	}
 

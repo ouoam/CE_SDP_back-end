@@ -2,9 +2,14 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	_ "github.com/lib/pq" //justify
+	"gopkg.in/guregu/null.v3"
 	"os"
+	"reflect"
+	"strconv"
+	"strings"
 )
 
 //DB a pointer to sql database
@@ -28,4 +33,58 @@ func Init() {
 	DB = db
 
 	fmt.Println("Successfully connected to database!")
+}
+
+func UpdateDate(id int, data interface{}) error {
+	var updateVal []interface{}
+	var updateSQL string
+	var returnVal []interface{}
+	var returnSQL string
+	var count = 1
+
+	stv := reflect.ValueOf(data).Elem()
+	for i := 0; i < stv.NumField(); i++ {
+		fieldType := stv.Type().Field(i)
+		field := stv.Field(i)
+		if !field.CanInterface() {
+			continue
+		}
+		v := field.Addr().Interface()
+
+		if _, have := fieldType.Tag.Lookup("dontUpdate"); !have {
+			valid := false
+			switch v := v.(type) {
+			case *null.String:
+				if v.Valid {
+					valid = true
+				}
+			case *null.Int:
+				if v.Valid {
+					valid = true
+				}
+			}
+			if valid {
+				updateSQL += fieldType.Tag.Get("json") + " = $" + strconv.Itoa(count) + ", "
+				count++
+				updateVal = append(updateVal, v)
+			}
+		}
+		if _, have := fieldType.Tag.Lookup("dontReturn"); !have {
+			returnSQL += fieldType.Tag.Get("json") + ", "
+			returnVal = append(returnVal, v)
+		}
+	}
+
+	if count == 1 {
+		return errors.New("No data to update")
+	}
+	updateSQL = updateSQL[:len(updateSQL) - 2]
+	returnSQL = returnSQL[:len(returnSQL) - 2]
+
+	statement := "UPDATE public." + strings.ToLower(reflect.TypeOf(data).Elem().Name()) + " SET " + updateSQL
+	statement += " WHERE id=$" + strconv.Itoa(count) + "RETURNING " + returnSQL
+	updateVal = append(updateVal, id)
+
+	err := DB.QueryRow(statement, updateVal...).Scan(returnVal...)
+	return err
 }
