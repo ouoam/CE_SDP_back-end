@@ -2,29 +2,36 @@ package model
 
 import (
 	"../db"
+	"gopkg.in/guregu/null.v3"
 )
 
 type Place struct {
-	ID		int     `json:"id"`
-	Name	string  `json:"name"`
-	Pic		string  `json:"pic"`
-	Geo		string	`json:"geo"`
+	ID		null.Int	`json:"id" dont:"cu"`
+	Name	null.String	`json:"name"`
+	Pic		null.String	`json:"pic"`
+	Geo		null.String	`json:"geo"`
 }
 
 func GetPlace(id int) (*Place, error) {
 	place := new(Place)
-	statement := `SELECT id, name, pic, geo FROM public.place WHERE id = $1`
-	err := db.DB.QueryRow(statement, id).Scan(&place.ID, &place.Name, &place.Pic, &place.Geo)
-	if err != nil {
+	if err := db.GetData(id, place); err != nil {
 		return nil, err
 	}
 	return place, nil
 }
 
 func AddPlace(place *Place) error {
-	statement := `INSERT INTO public.place(name, pic, geo) VALUES($1, $2, $3) RETURNING id`
-	err := db.DB.QueryRow(statement, place.Name, place.Pic, place.Geo).Scan(&place.ID)
-
-	return err
+	if id, err := db.AddData(place); err != nil {
+		return err
+	} else {
+		place.ID.SetValid(id)
+	}
+	return nil
 }
 
+func UpdatePlace(place *Place, id int) error {
+	if err := db.UpdateDate(id, place); err != nil {
+		return err
+	}
+	return nil
+}
