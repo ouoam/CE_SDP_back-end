@@ -9,10 +9,10 @@ import (
 )
 
 type Member struct {
-	ID           int		`json:"id" dont:"cu"`
+	ID           null.Int	`json:"id" dont:"cu"`
 	Name         null.String`json:"name"`
 	Surname      null.String`json:"surname"`
-	Username     string		`json:"username" dont:"u"`
+	Username     null.String`json:"username" dont:"u"`
 	Password     null.String`json:"password" dont:"r"`
 	IdCard       null.Int	`json:"id_card"`
 	Email        null.String`json:"email"`
@@ -76,13 +76,14 @@ func AddMember(member *Member) error {
 		return err
 	}
 
-	statement := `INSERT INTO public.member (name, surname, username, password, id_card, email, bank_account, address) 
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
-	err := db.DB.QueryRow(statement, member.Name, member.Surname, member.Username, member.Password, member.IdCard,
-		member.Email, member.BankAccount, member.Address).Scan(&member.ID)
+	if id, err := db.AddData(member); err != nil {
+		return err
+	} else {
+		member.ID.SetValid(id)
+	}
 
 	_ = member.Password.UnmarshalText([]byte(""))
-	return err
+	return nil
 }
 
 func UpdateMember(member *Member, id int) error {

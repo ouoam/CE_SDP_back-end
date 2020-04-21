@@ -35,6 +35,57 @@ func Init() {
 	fmt.Println("Successfully connected to database!")
 }
 
+func AddData(data interface{}) (int64, error) {
+	var insertVal []interface{}
+	var insertSQL string
+	var insertSqlVal string
+	var count = 1
+
+	stv := reflect.ValueOf(data).Elem()
+	for i := 0; i < stv.NumField(); i++ {
+		fieldType := stv.Type().Field(i)
+		field := stv.Field(i)
+		if !field.CanInterface() {
+			continue
+		}
+		v := field.Addr().Interface()
+		val, have := fieldType.Tag.Lookup("dont")
+		valid := false
+		switch v := v.(type) {
+		case *null.String:
+			if v.Valid {
+				valid = true
+			}
+		case *null.Int:
+			if v.Valid {
+				valid = true
+			}
+		}
+		if valid && (!have || (have && !strings.Contains(val, "c"))) {
+			insertSQL += fieldType.Tag.Get("json") + ", "
+			insertVal = append(insertVal, v)
+			insertSqlVal += "$" + strconv.Itoa(count) + ", "
+			count++
+		}
+
+		fmt.Println(fieldType.Tag.Get("json"), valid, have, val, strings.Contains(val, "c"))
+	}
+
+	if count == 1 {
+		return 0, errors.New("No data to update")
+	}
+	insertSQL = insertSQL[:len(insertSQL) - 2]
+	insertSqlVal = insertSqlVal[:len(insertSqlVal) - 2]
+
+	statement := "INSERT INTO public." + strings.ToLower(reflect.TypeOf(data).Elem().Name()) + " (" + insertSQL + ") "
+	statement += "VALUES (" + insertSqlVal + ") RETURNING id"
+
+	var id int64
+	err := DB.QueryRow(statement, insertVal...).Scan(&id)
+
+	return id, err
+}
+
 func UpdateDate(id int, data interface{}) error {
 	var updateVal []interface{}
 	var updateSQL string
