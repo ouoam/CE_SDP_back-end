@@ -12,15 +12,12 @@ type Place struct {
 	Geo		null.String	`json:"geo"`
 }
 
-func GetPlace(id int) (*Place, error) {
-	place := new(Place)
-	if err := db.GetData(id, place); err != nil {
-		return nil, err
-	}
-	return place, nil
+func (place *Place) GetDB() error {
+	err := db.GetData(place.ID.Int64, place)
+	return err
 }
 
-func AddPlace(place *Place) error {
+func (place *Place) AddDB() error {
 	if id, err := db.AddData(place); err != nil {
 		return err
 	} else {
@@ -29,9 +26,7 @@ func AddPlace(place *Place) error {
 	return nil
 }
 
-func UpdatePlace(place *Place, id int) error {
-	if err := db.UpdateDate(id, place); err != nil {
-		return err
-	}
-	return nil
+func (place *Place) UpdateDB() error {
+	err := db.UpdateDate(place.ID.Int64, place)
+	return err
 }

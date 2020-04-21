@@ -26,7 +26,7 @@ var (
 	emailRegexp = regexp.MustCompile("(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])")
 )
 
-func preMember(member *Member, isNew bool) error {
+func (member *Member)preMember(isNew bool) error {
 	// TODO	- check id card https://th.wikipedia.org/wiki/Thai_ID https://th.wikipedia.org/wiki/ISO_3166-2:TH
 	//		- check username
 	//		- check name and surname
@@ -57,19 +57,17 @@ func preMember(member *Member, isNew bool) error {
 	return nil
 }
 
-func GetMember(id int) (*Member, error) {
-	member := new(Member)
-
-	if err := db.GetData(id, member); err != nil {
-		return nil, err
+func (member *Member)GetDB() error {
+	if err := db.GetData(member.ID.Int64, member); err != nil {
+		return err
 	}
 
 	_ = member.Password.UnmarshalText([]byte(""))
-	return member, nil
+	return nil
 }
 
-func AddMember(member *Member) error {
-	if err := preMember(member, true) ; err != nil {
+func (member *Member)AddDB() error {
+	if err := member.preMember(true) ; err != nil {
 		return err
 	}
 
@@ -83,12 +81,12 @@ func AddMember(member *Member) error {
 	return nil
 }
 
-func UpdateMember(member *Member, id int) error {
-	if err := preMember(member, false) ; err != nil {
+func (member *Member)UpdateDB() error {
+	if err := member.preMember(false) ; err != nil {
 		return err
 	}
 
-	if err := db.UpdateDate(id, member); err != nil {
+	if err := db.UpdateDate(member.ID.Int64, member); err != nil {
 		return err
 	}
 

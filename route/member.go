@@ -15,7 +15,7 @@ func MemberRoute(route *fiber.Group) {
 	})
 
 	route.Get("/:id", func(c *fiber.Ctx) {
-		id, err := strconv.Atoi(c.Params("id"))
+		id, err := strconv.ParseInt(c.Params("id"), 10, 64)
 		if err != nil {
 			if numError, ok := err.(*strconv.NumError); ok {
 				_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": numError.Err.Error()})
@@ -25,8 +25,10 @@ func MemberRoute(route *fiber.Group) {
 			return
 		}
 
-		result, err := model.GetMember(id)
-		if err != nil {
+		member := new(model.Member)
+		member.ID.SetValid(id)
+
+		if err := member.GetDB(); err != nil {
 			if strings.Contains(err.Error(), "no rows") {
 				_ = c.Status(http.StatusNotFound).JSON(fiber.Map{"error": "Place not found"})
 				return
@@ -35,7 +37,7 @@ func MemberRoute(route *fiber.Group) {
 			return
 		}
 
-		if err := c.JSON(result); err != nil {
+		if err := c.JSON(member); err != nil {
 			c.Status(http.StatusInternalServerError).Send(err)
 			return
 		}
@@ -49,7 +51,7 @@ func MemberRoute(route *fiber.Group) {
 			return
 		}
 
-		if err := model.AddMember(member); err != nil {
+		if err := member.AddDB(); err != nil {
 			if strings.Contains(err.Error(), "duplicate key value") {
 				if strings.Contains(err.Error(), "username") {
 					_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Other member already used this username."})
@@ -73,7 +75,7 @@ func MemberRoute(route *fiber.Group) {
 	route.Put("/:id", func(c *fiber.Ctx) {
 		member := new(model.Member)
 
-		id, err := strconv.Atoi(c.Params("id"))
+		id, err := strconv.ParseInt(c.Params("id"), 10, 64)
 		if err != nil {
 			if numError, ok := err.(*strconv.NumError); ok {
 				_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": numError.Err.Error()})
@@ -88,7 +90,9 @@ func MemberRoute(route *fiber.Group) {
 			return
 		}
 
-		if err := model.UpdateMember(member, id); err != nil {
+		member.ID.SetValid(id)
+
+		if err := member.UpdateDB(); err != nil {
 			if strings.Contains(err.Error(), "duplicate key value") {
 				if strings.Contains(err.Error(), "username") {
 					_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Other member already used this username."})

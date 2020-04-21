@@ -82,7 +82,7 @@ func AddData(data interface{}) (int64, error) {
 	return id, err
 }
 
-func GetData(id int, data interface{}) error {
+func GetData(id int64, data interface{}) error {
 	var getSQL string
 	var returnVal []interface{}
 
@@ -120,7 +120,7 @@ func GetData(id int, data interface{}) error {
 	return err
 }
 
-func UpdateDate(id int, data interface{}) error {
+func UpdateDate(id int64, data interface{}) error {
 	var updateVal []interface{}
 	var updateSQL string
 	var returnVal []interface{}
