@@ -67,8 +67,6 @@ func AddData(data interface{}) (int64, error) {
 			insertSqlVal += "$" + strconv.Itoa(count) + ", "
 			count++
 		}
-
-		fmt.Println(fieldType.Tag.Get("json"), valid, have, val, strings.Contains(val, "c"))
 	}
 
 	if count == 1 {
