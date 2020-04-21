@@ -51,13 +51,11 @@ func AddData(data interface{}) (int64, error) {
 		valid := false
 		switch v := v.(type) {
 		case *null.String:
-			if v.Valid {
-				valid = true
-			}
+			valid = v.Valid
 		case *null.Int:
-			if v.Valid {
-				valid = true
-			}
+			valid = v.Valid
+		case *null.Time:
+			valid = v.Valid
 		}
 		if valid && (!have || (have && !strings.Contains(val, "c"))) {
 			insertSQL += fieldType.Tag.Get("json") + ", "
@@ -98,13 +96,11 @@ func GetData(id int64, data interface{}) error {
 		valid := false
 		switch v := v.(type) {
 		case *null.String:
-			if v.Valid {
-				valid = true
-			}
+			valid = v.Valid
 		case *null.Int:
-			if v.Valid {
-				valid = true
-			}
+			valid = v.Valid
+		case *null.Time:
+			valid = v.Valid
 		}
 		if !valid && (!have || (have && !strings.Contains(val, "r"))) {
 			getSQL += fieldType.Tag.Get("json") + ", "
@@ -139,13 +135,11 @@ func UpdateDate(id int64, data interface{}) error {
 		valid := false
 		switch v := v.(type) {
 		case *null.String:
-			if v.Valid {
-				valid = true
-			}
+			valid = v.Valid
 		case *null.Int:
-			if v.Valid {
-				valid = true
-			}
+			valid = v.Valid
+		case *null.Time:
+			valid = v.Valid
 		}
 		if valid && (!have || (have && !strings.Contains(val, "u"))) {
 			updateSQL += fieldType.Tag.Get("json") + " = $" + strconv.Itoa(count) + ", "
