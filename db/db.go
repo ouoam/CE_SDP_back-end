@@ -62,12 +62,12 @@ func UpdateDate(id int, data interface{}) error {
 				valid = true
 			}
 		}
-		if valid && (!have || (have && strings.Contains(val, "u"))) {
+		if valid && (!have || (have && !strings.Contains(val, "u"))) {
 			updateSQL += fieldType.Tag.Get("json") + " = $" + strconv.Itoa(count) + ", "
 			count++
 			updateVal = append(updateVal, v)
 		}
-		if !valid && (!have || (have && strings.Contains(val, "r"))) {
+		if !valid && (!have || (have && !strings.Contains(val, "r"))) {
 			returnSQL += fieldType.Tag.Get("json") + ", "
 			returnVal = append(returnVal, v)
 		}
