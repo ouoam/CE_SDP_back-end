@@ -59,11 +59,8 @@ func preMember(member *Member, isNew bool) error {
 
 func GetMember(id int) (*Member, error) {
 	member := new(Member)
-	statement := `SELECT id, name, surname, username, id_card, email, verification, bank_account, address 
-FROM public.member WHERE id = $1`
-	err := db.DB.QueryRow(statement, id).Scan(&member.ID, &member.Name, &member.Surname, &member.Username, &member.IdCard,
-		&member.Email, &member.Verification, &member.BankAccount, &member.Address)
-	if err != nil {
+
+	if err := db.GetData(id, member); err != nil {
 		return nil, err
 	}
 

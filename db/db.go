@@ -84,6 +84,44 @@ func AddData(data interface{}) (int64, error) {
 	return id, err
 }
 
+func GetData(id int, data interface{}) error {
+	var getSQL string
+	var returnVal []interface{}
+
+	stv := reflect.ValueOf(data).Elem()
+	for i := 0; i < stv.NumField(); i++ {
+		fieldType := stv.Type().Field(i)
+		field := stv.Field(i)
+		if !field.CanInterface() {
+			continue
+		}
+		v := field.Addr().Interface()
+		val, have := fieldType.Tag.Lookup("dont")
+		valid := false
+		switch v := v.(type) {
+		case *null.String:
+			if v.Valid {
+				valid = true
+			}
+		case *null.Int:
+			if v.Valid {
+				valid = true
+			}
+		}
+		if !valid && (!have || (have && !strings.Contains(val, "r"))) {
+			getSQL += fieldType.Tag.Get("json") + ", "
+			returnVal = append(returnVal, v)
+		}
+	}
+
+	getSQL = getSQL[:len(getSQL) - 2]
+
+	statement := "SELECT " + getSQL + " FROM public." + strings.ToLower(reflect.TypeOf(data).Elem().Name()) + " WHERE id = $1"
+	err := DB.QueryRow(statement, id).Scan(returnVal...)
+
+	return err
+}
+
 func UpdateDate(id int, data interface{}) error {
 	var updateVal []interface{}
 	var updateSQL string
