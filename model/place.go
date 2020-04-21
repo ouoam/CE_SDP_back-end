@@ -12,6 +12,10 @@ type Place struct {
 	Geo		null.String	`json:"geo"`
 }
 
+func (place *Place)SetID(id int64) {
+	place.ID.SetValid(id)
+}
+
 func (place *Place) GetDB() error {
 	err := db.GetData(place.ID.Int64, place)
 	return err
