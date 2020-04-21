@@ -19,6 +19,9 @@ func Init() {
 
 	MemberRoute(app.Group("/members"))
 	PlaceRoute(app.Group("/places"))
+	ReviewRoute(app.Group("/reviews"))
+	TourRoute(app.Group("/tours"))
+	TranscriptRoute(app.Group("/transcripts"))
 
 	app.Listen(3000)
 }
