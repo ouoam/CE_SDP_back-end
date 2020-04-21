@@ -152,7 +152,8 @@ func UpdateDate(id int, data interface{}) error {
 			count++
 			updateVal = append(updateVal, v)
 		}
-		if !valid && (!have || (have && !strings.Contains(val, "r"))) {
+		if (!valid && (!have || (have && !strings.Contains(val, "r")))) ||
+			(valid && (!have || (have && strings.Contains(val, "u")))) {
 			returnSQL += fieldType.Tag.Get("json") + ", "
 			returnVal = append(returnVal, v)
 		}
