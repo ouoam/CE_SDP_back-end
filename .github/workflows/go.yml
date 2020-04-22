@@ -9,26 +9,57 @@ on:
 jobs:
 
   build:
-    name: Build
+    name: Build And Deploy
     runs-on: ubuntu-latest
     steps:
 
-    - name: Set up Go 1.x
+    - name: Set up Go 1.14.2
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.13
+        go-version: 1.14.2
       id: go
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
+    
+    - name: Cache dependencies
+      uses: actions/cache@v1
+      id: cache
+      with:
+        path: ~/go/src
+        key: ${{ runner.os }}-go-dep-${{ hashFiles('**/dep.go') }}
+        restore-keys: |
+          ${{ runner.os }}-go-dep
 
     - name: Get dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
       run: |
         go get -v -t -d ./...
         if [ -f Gopkg.toml ]; then
             curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
             dep ensure
         fi
+        
+    - name: Cache build
+      uses: actions/cache@v1
+      with:
+        path: ~/.cache/go-build
+        key: ${{ runner.os }}-go-build-${{ hashFiles('**.go') }}
+        restore-keys: |
+          ${{ runner.os }}-go-build
 
     - name: Build
       run: go build -v .
+      
+    - name: Deploy on Raspberry Pi
+      uses: appleboy/ssh-action@master
+      if: github.event_name == 'push'
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        script: |
+          cd /home/pi/CE_SDP_back-end
+          git pull
+          go build -o main
+          sudo systemctl restart sdp.service
