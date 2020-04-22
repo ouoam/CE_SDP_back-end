@@ -23,7 +23,10 @@ func Init() {
 	TourRoute(app.Group("/tours"))
 	TranscriptRoute(app.Group("/transcripts"))
 
-	app.Listen(3000)
+	err := app.Listen(3000)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func GetID(c *fiber.Ctx, dataModel model.WithID) {
