@@ -15,6 +15,8 @@ type Transcript struct {
 	Time		null.Time	`json:"time" dont:"cu"`
 }
 
+// todo time dont get when create
+
 func (transcript *Transcript)SetID(id int64) {
 	transcript.ID.SetValid(id)
 }

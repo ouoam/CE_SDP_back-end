@@ -2,6 +2,7 @@ package route
 
 import (
 	"../model"
+	"github.com/gofiber/cors"
 	"github.com/gofiber/fiber"
 	"net/http"
 	"strconv"
@@ -12,6 +13,14 @@ func Init() {
 	app := fiber.New()
 
 	app.Settings.Prefork = true
+
+	config := cors.Config{AllowMethods: []string{
+		http.MethodGet,
+		http.MethodPost,
+		http.MethodPut,
+	}}
+
+	app.Use(cors.New(config))
 
 	app.Get("/", func(c *fiber.Ctx) {
 		c.Send("Hello, World!")
