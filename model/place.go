@@ -34,3 +34,8 @@ func (place *Place) UpdateDB() error {
 	err := db.UpdateDate(place.ID.Int64, place)
 	return err
 }
+
+func (place *Place) ListDB() ([]interface{}, error) {
+	results, err := db.ListData(place)
+	return results, err
+}

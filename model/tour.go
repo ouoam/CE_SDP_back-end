@@ -42,3 +42,8 @@ func (tour *Tour) UpdateDB() error {
 	err := db.UpdateDate(tour.ID.Int64, tour)
 	return err
 }
+
+func (tour *Tour) ListDB() ([]interface{}, error) {
+	results, err := db.ListData(tour)
+	return results, err
+}

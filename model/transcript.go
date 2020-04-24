@@ -39,3 +39,8 @@ func (transcript *Transcript) UpdateDB() error {
 	err := db.UpdateDate(transcript.ID.Int64, transcript)
 	return err
 }
+
+func (transcript *Transcript) ListDB() ([]interface{}, error) {
+	results, err := db.ListData(transcript)
+	return results, err
+}
