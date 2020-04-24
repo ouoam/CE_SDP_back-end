@@ -7,10 +7,6 @@ import (
 )
 
 func TranscriptRoute(route *fiber.Group) {
-	route.Get("/", func(c *fiber.Ctx) {
-		c.Send("test test")
-	})
-
 	route.Get("/:id", func(c *fiber.Ctx) {
 		transcript := new(model.Transcript)
 		controller.GetID(c, transcript)

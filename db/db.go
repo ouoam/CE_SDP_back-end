@@ -229,7 +229,7 @@ func ListData(data interface{}) ([]interface{}, error) { // todo filter don't re
 		if err != nil {
 			return nil, err
 		}
-		results = append(results, &result)
+		results = append(results, result)
 	}
 
 	return results, nil
