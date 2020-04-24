@@ -1,6 +1,7 @@
 package route
 
 import (
+	"../controller"
 	"../model"
 	"github.com/gofiber/fiber"
 )
@@ -12,16 +13,16 @@ func TranscriptRoute(route *fiber.Group) {
 
 	route.Get("/:id", func(c *fiber.Ctx) {
 		transcript := new(model.Transcript)
-		GetID(c, transcript)
+		controller.GetID(c, transcript)
 	})
 
 	route.Post("/", func(c *fiber.Ctx) {
 		transcript := new(model.Transcript)
-		Post(c, transcript)
+		controller.Post(c, transcript)
 	})
 
 	route.Put("/:id", func(c *fiber.Ctx) {
 		transcript := new(model.Transcript)
-		PutID(c, transcript)
+		controller.PutID(c, transcript)
 	})
 }

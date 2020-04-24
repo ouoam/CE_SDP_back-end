@@ -1,6 +1,7 @@
 package route
 
 import (
+	"../controller"
 	"../model"
 	"github.com/gofiber/fiber"
 )
@@ -12,16 +13,16 @@ func MemberRoute(route *fiber.Group) {
 
 	route.Get("/:id", func(c *fiber.Ctx) {
 		member := new(model.Member)
-		GetID(c, member)
+		controller.GetID(c, member)
 	})
 
 	route.Post("/", func(c *fiber.Ctx) {
 		member := new(model.Member)
-		Post(c, member)
+		controller.Post(c, member)
 	})
 
 	route.Put("/:id", func(c *fiber.Ctx) {
 		member := new(model.Member)
-		PutID(c, member)
+		controller.PutID(c, member)
 	})
 }
