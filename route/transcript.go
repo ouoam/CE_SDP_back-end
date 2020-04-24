@@ -25,4 +25,9 @@ func TranscriptRoute(route *fiber.Group) {
 		transcript := new(model.Transcript)
 		controller.PutID(c, transcript)
 	})
+
+	route.Get("/", func(c *fiber.Ctx) {
+		transcript := new(model.Transcript)
+		controller.List(c, transcript)
+	})
 }

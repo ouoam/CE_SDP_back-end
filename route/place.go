@@ -7,10 +7,6 @@ import (
 )
 
 func PlaceRoute(route *fiber.Group) {
-	route.Get("/", func(c *fiber.Ctx) {
-		c.Send("test test")
-	})
-
 	route.Get("/:id", func(c *fiber.Ctx) {
 		place := new(model.Place)
 		controller.GetID(c, place)
@@ -24,5 +20,10 @@ func PlaceRoute(route *fiber.Group) {
 	route.Put("/:id", func(c *fiber.Ctx) {
 		place := new(model.Place)
 		controller.PutID(c, place)
+	})
+
+	route.Get("/", func(c *fiber.Ctx) {
+		place := new(model.Place)
+		controller.List(c, place)
 	})
 }

@@ -98,14 +98,16 @@ func (member *Member) UpdateDB() error {
 	return nil
 }
 
-func (member *Member) ListDB() ([]*Member, error) {
+func (member *Member) ListDB() ([]interface{}, error) {
 	results, err := db.ListData(member)
 	if err != nil {
 		return nil, err
 	}
-	members := make([]*Member, len(results))
+	members := make([]interface{}, len(results))
 	for i, result := range results {
-		members[i] = result.(*Member)
+		temp := result.(*Member)
+		_ = temp.Password.UnmarshalText([]byte(""))
+		members[i] = temp
 	}
 	return members, nil
 }

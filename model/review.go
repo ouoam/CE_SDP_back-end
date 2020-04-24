@@ -17,25 +17,30 @@ type Review struct {
 
 //todo update time with now
 
-func (Review *Review)SetID(id int64) {
-	Review.ID.SetValid(id)
+func (review *Review)SetID(id int64) {
+	review.ID.SetValid(id)
 }
 
-func (Review *Review) GetDB() error {
-	err := db.GetData(Review.ID.Int64, Review)
+func (review *Review) GetDB() error {
+	err := db.GetData(review.ID.Int64, review)
 	return err
 }
 
-func (Review *Review) AddDB() error {
-	if id, err := db.AddData(Review); err != nil {
+func (review *Review) AddDB() error {
+	if id, err := db.AddData(review); err != nil {
 		return err
 	} else {
-		Review.ID.SetValid(id)
+		review.ID.SetValid(id)
 	}
 	return nil
 }
 
-func (Review *Review) UpdateDB() error {
-	err := db.UpdateDate(Review.ID.Int64, Review)
+func (review *Review) UpdateDB() error {
+	err := db.UpdateDate(review.ID.Int64, review)
 	return err
+}
+
+func (review *Review) ListDB() ([]interface{}, error) {
+	results, err := db.ListData(review)
+	return results, err
 }

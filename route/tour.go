@@ -7,10 +7,6 @@ import (
 )
 
 func TourRoute(route *fiber.Group) {
-	route.Get("/", func(c *fiber.Ctx) {
-		c.Send("test test")
-	})
-
 	route.Get("/:id", func(c *fiber.Ctx) {
 		tour := new(model.Tour)
 		controller.GetID(c, tour)
@@ -24,5 +20,10 @@ func TourRoute(route *fiber.Group) {
 	route.Put("/:id", func(c *fiber.Ctx) {
 		tour := new(model.Tour)
 		controller.PutID(c, tour)
+	})
+
+	route.Get("/", func(c *fiber.Ctx) {
+		tour := new(model.Tour)
+		controller.List(c, tour)
 	})
 }

@@ -102,3 +102,16 @@ func PutID(c *fiber.Ctx, dataModel model.WithID) {
 		return
 	}
 }
+
+func List(c *fiber.Ctx, dataModel model.WithID) {
+	if err := c.BodyParser(&dataModel); err != nil {
+		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return
+	}
+
+	members, err := dataModel.ListDB()
+	if err != nil {
+		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	_ = c.JSON(members)
+}
