@@ -4,13 +4,10 @@ import (
 	"../controller"
 	"../model"
 	"github.com/gofiber/fiber"
+	"net/http"
 )
 
 func MemberRoute(route *fiber.Group) {
-	route.Get("/", func(c *fiber.Ctx) {
-		c.Send("test test")
-	})
-
 	route.Get("/:id", func(c *fiber.Ctx) {
 		member := new(model.Member)
 		controller.GetID(c, member)
@@ -24,5 +21,19 @@ func MemberRoute(route *fiber.Group) {
 	route.Put("/:id", func(c *fiber.Ctx) {
 		member := new(model.Member)
 		controller.PutID(c, member)
+	})
+
+	route.Get("/", func(c *fiber.Ctx) {
+		member := new(model.Member)
+		if err := c.BodyParser(&member); err != nil {
+			_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return
+		}
+
+		members, err := member.ListDB()
+		if err != nil {
+			_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		}
+		_ = c.JSON(members)
 	})
 }

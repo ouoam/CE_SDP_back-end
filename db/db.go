@@ -68,8 +68,8 @@ func AddData(data interface{}) (int64, error) {
 	if count == 1 {
 		return 0, errors.New("No data to update")
 	}
-	insertSQL = insertSQL[:len(insertSQL) - 2]
-	insertSqlVal = insertSqlVal[:len(insertSqlVal) - 2]
+	insertSQL = insertSQL[:len(insertSQL)-2]
+	insertSqlVal = insertSqlVal[:len(insertSqlVal)-2]
 
 	statement := "INSERT INTO public." + strings.ToLower(reflect.TypeOf(data).Elem().Name()) + " (" + insertSQL + ") "
 	statement += "VALUES (" + insertSqlVal + ") RETURNING id"
@@ -108,7 +108,7 @@ func GetData(id int64, data interface{}) error {
 		}
 	}
 
-	getSQL = getSQL[:len(getSQL) - 2]
+	getSQL = getSQL[:len(getSQL)-2]
 
 	statement := "SELECT " + getSQL + " FROM public." + strings.ToLower(reflect.TypeOf(data).Elem().Name()) + " WHERE id = $1"
 	err := db.QueryRow(statement, id).Scan(returnVal...)
@@ -158,7 +158,7 @@ func UpdateDate(id int64, data interface{}) error {
 	}
 
 	statement := "UPDATE public." + strings.ToLower(reflect.TypeOf(data).Elem().Name())
-	statement += " SET " + updateSQL[:len(updateSQL) - 2]
+	statement += " SET " + updateSQL[:len(updateSQL)-2]
 	statement += " WHERE id=$" + strconv.Itoa(count)
 	updateVal = append(updateVal, id)
 
@@ -170,4 +170,67 @@ func UpdateDate(id int64, data interface{}) error {
 
 	_, err := db.Exec(statement, updateVal...)
 	return err
+}
+
+func ListData(data interface{}) ([]interface{}, error) { // todo filter don't read data
+	var whereVal []interface{}
+	var whereSQL []string
+	var count = 1
+
+	stv := reflect.ValueOf(data).Elem()
+	for i := 0; i < stv.NumField(); i++ {
+		fieldType := stv.Type().Field(i)
+		field := stv.Field(i)
+		if !field.CanInterface() {
+			continue
+		}
+		v := field.Addr().Interface()
+		valid := false
+		switch v := v.(type) {
+		case *null.String:
+			valid = v.Valid
+		case *null.Int:
+			valid = v.Valid
+		case *null.Time:
+			valid = v.Valid
+		}
+		if valid {
+			whereSQL = append(whereSQL, fieldType.Tag.Get("json")+" = $"+strconv.Itoa(count))
+			count++
+			whereVal = append(whereVal, v)
+		}
+	}
+
+	statement := "SELECT * FROM public." + strings.ToLower(reflect.TypeOf(data).Elem().Name())
+	if len(whereSQL) != 0 {
+		statement += " WHERE " + strings.Join(whereSQL, " AND ")
+	}
+
+	rows, err := db.Query(statement, whereVal...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []interface{}
+	for rows.Next() {
+		result := reflect.New(stv.Type()).Interface()
+		var returnVal []interface{}
+		stv := reflect.ValueOf(result).Elem()
+		for i := 0; i < stv.NumField(); i++ {
+			field := stv.Field(i)
+			if !field.CanInterface() {
+				continue
+			}
+			v := field.Addr().Interface()
+			returnVal = append(returnVal, v)
+		}
+		err := rows.Scan(returnVal...)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, result)
+	}
+
+	return results, nil
 }
