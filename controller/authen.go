@@ -93,7 +93,14 @@ func CheckLogin(c *fiber.Ctx)  {
 		})
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			fmt.Println(claims)
+			var id int64
+			if val, ok := claims["user_id"]; !ok {
+				c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+				return
+			} else {
+				id = int64(val.(float64))
+			}
+			c.Locals("user_id", id)
 			c.Next()
 			return
 		} else {
