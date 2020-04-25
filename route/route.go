@@ -1,6 +1,7 @@
 package route
 
 import (
+	"../controller"
 	"github.com/gofiber/cors"
 	"github.com/gofiber/fiber"
 	"net/http"
@@ -22,6 +23,8 @@ func Init() {
 	app.Get("/", func(c *fiber.Ctx) {
 		c.Send("Hello, World!")
 	})
+
+	app.Post("/login", controller.Login)
 
 	MemberRoute(app.Group("/members"))
 	PlaceRoute(app.Group("/places"))
