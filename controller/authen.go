@@ -7,7 +7,9 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber"
 	"golang.org/x/crypto/bcrypt"
+	"log"
 	"net/http"
+	"net/smtp"
 	"os"
 	"strings"
 	"time"
@@ -100,4 +102,79 @@ func CheckLogin(c *fiber.Ctx)  {
 		}
 	}
 	c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+}
+
+func ForgotPassword(c *fiber.Ctx) {
+	input := new(model.Member)
+	if err := c.BodyParser(input); err != nil {
+		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return
+	}
+
+	if !(input.Username.Valid || input.Email.Valid) {
+		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Please enter username or email"})
+		return
+	}
+
+	member := model.Member{
+		Username: input.Username,
+		Email: input.Email,
+	}
+
+	members, err := db.ListData(&member)
+	if err != nil {
+		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return
+	}
+	if len(members) == 0 {
+		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Username or E-mail or Password incorrect."})
+		return
+	}
+
+	member = *(members[0].(*model.Member))
+
+	exp := time.Now().Add(time.Minute * 30).Unix()
+	tm := exp % 17 + 5
+	password := member.Password.String
+	password = password[tm: tm + 5]
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"exp": exp,
+		"r": member.ID.Int64,
+		"u": member.Username.String,
+		"c": password,
+	})
+
+	// Sign and get the complete encoded token as a string using the secret
+	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET_KEY")))
+	if err != nil {
+		_ = c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return
+	}
+
+	// Set up authentication information.
+	auth := smtp.PlainAuth(
+		"",
+		os.Getenv("EMAIL_USER"),
+		os.Getenv("EMAIL_PASS"),
+		os.Getenv("EMAIL_SMTP"),
+	)
+	msg := []byte("To: " + member.Email.String + "\r\n" +
+		"Subject: ไปเที่ยวกัน : รหัสสำหรับรีเซ็ตรหัสผ่าน\r\n" +
+		"\r\n" +
+		"รหัสข้างล่างนี้ไว้ใช้สำหรับรีเซ็ตรหัสผ่าน รหัสนี้สามารถใช้ได้ 30 นาที นับจากขอรีเซ็ตรหัสผ่าน\r\n\r\n" + tokenString + "\r\n")
+	// Connect to the server, authenticate, set the sender and recipient,
+	// and send the email all in one step.
+	err = smtp.SendMail(
+		os.Getenv("EMAIL_SMTP") + ":" + os.Getenv("EMAIL_PORT"),
+		auth,
+		os.Getenv("EMAIL_USER"),
+		[]string{member.Email.String},
+		msg,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_ = c.JSON(fiber.Map{"success": "Reset code send to your E-mail"})
 }

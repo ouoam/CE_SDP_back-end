@@ -25,6 +25,7 @@ func Init() {
 	})
 
 	app.Post("/login", controller.Login)
+	app.Post("/forgot", controller.ForgotPassword)
 
 	MemberRoute(app.Group("/members"))
 	PlaceRoute(app.Group("/places"))
