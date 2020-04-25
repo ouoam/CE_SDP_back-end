@@ -12,12 +12,12 @@ func TourRoute(route *fiber.Group) {
 		controller.GetID(c, tour)
 	})
 
-	route.Post("/", func(c *fiber.Ctx) {
+	route.Post("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		tour := new(model.Tour)
 		controller.Post(c, tour)
 	})
 
-	route.Put("/:id", func(c *fiber.Ctx) {
+	route.Put("/:id", controller.CheckLogin, func(c *fiber.Ctx) {
 		tour := new(model.Tour)
 		controller.PutID(c, tour)
 	})

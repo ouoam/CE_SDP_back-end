@@ -7,22 +7,22 @@ import (
 )
 
 func TranscriptRoute(route *fiber.Group) {
-	route.Get("/:id", func(c *fiber.Ctx) {
+	route.Get("/:id", controller.CheckLogin, func(c *fiber.Ctx) {
 		transcript := new(model.Transcript)
 		controller.GetID(c, transcript)
 	})
 
-	route.Post("/", func(c *fiber.Ctx) {
+	route.Post("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		transcript := new(model.Transcript)
 		controller.Post(c, transcript)
 	})
 
-	route.Put("/:id", func(c *fiber.Ctx) {
+	route.Put("/:id", controller.CheckLogin, func(c *fiber.Ctx) {
 		transcript := new(model.Transcript)
 		controller.PutID(c, transcript)
 	})
 
-	route.Get("/", func(c *fiber.Ctx) {
+	route.Get("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		transcript := new(model.Transcript)
 		controller.List(c, transcript)
 	})

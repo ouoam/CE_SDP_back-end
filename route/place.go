@@ -12,12 +12,12 @@ func PlaceRoute(route *fiber.Group) {
 		controller.GetID(c, place)
 	})
 
-	route.Post("/", func(c *fiber.Ctx) {
+	route.Post("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		place := new(model.Place)
 		controller.Post(c, place)
 	})
 
-	route.Put("/:id", func(c *fiber.Ctx) {
+	route.Put("/:id", controller.CheckLogin, func(c *fiber.Ctx) {
 		place := new(model.Place)
 		controller.PutID(c, place)
 	})

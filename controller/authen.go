@@ -3,11 +3,13 @@ package controller
 import (
 	"../db"
 	"../model"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gofiber/fiber"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -71,4 +73,31 @@ func Login(c *fiber.Ctx) {
 	}
 
 	_ = c.JSON(fiber.Map{"token": tokenString})
+}
+
+func CheckLogin(c *fiber.Ctx)  {
+	auth := c.Get(fiber.HeaderAuthorization)
+	// Check if header is valid
+	if len(auth) > 7 && strings.ToLower(auth[:6]) == "bearer" {
+
+		token, err := jwt.Parse(auth[7:], func(token *jwt.Token) (interface{}, error) {
+			// Don't forget to validate the alg is what you expect:
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+
+			// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+			return []byte(os.Getenv("SECRET_KEY")), nil
+		})
+
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			fmt.Println(claims)
+			c.Next()
+			return
+		} else {
+			c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err})
+			return
+		}
+	}
+	c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func MemberRoute(route *fiber.Group) {
-	route.Get("/:id", func(c *fiber.Ctx) {
+	route.Get("/:id", controller.CheckLogin, func(c *fiber.Ctx) {
 		member := new(model.Member)
 		controller.GetID(c, member)
 	})
@@ -17,12 +17,12 @@ func MemberRoute(route *fiber.Group) {
 		controller.Post(c, member)
 	})
 
-	route.Put("/:id", func(c *fiber.Ctx) {
+	route.Put("/:id", controller.CheckLogin, func(c *fiber.Ctx) {
 		member := new(model.Member)
 		controller.PutID(c, member)
 	})
 
-	route.Get("/", func(c *fiber.Ctx) {
+	route.Get("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		member := new(model.Member)
 		controller.List(c, member)
 	})

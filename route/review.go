@@ -12,12 +12,12 @@ func ReviewRoute(route *fiber.Group) {
 		controller.GetID(c, review)
 	})
 
-	route.Post("/", func(c *fiber.Ctx) {
+	route.Post("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		review := new(model.Review)
 		controller.Post(c, review)
 	})
 
-	route.Put("/:id", func(c *fiber.Ctx) {
+	route.Put("/:id", controller.CheckLogin, func(c *fiber.Ctx) {
 		review := new(model.Review)
 		controller.PutID(c, review)
 	})
