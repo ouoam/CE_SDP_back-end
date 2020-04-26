@@ -12,7 +12,9 @@ type Message struct {
 	Message	null.Int	`json:"message" dont:"ud"`
 }
 
-//todo update time with now
+func (message *Message) SetID(id int64)  {
+	message.To.SetValid(id)
+}
 
 func (message *Message) GetDB() error {
 	//err := db.GetData(message.ID.Int64, message)
@@ -22,14 +24,7 @@ func (message *Message) GetDB() error {
 }
 
 func (message *Message) AddDB() error {
-	//if id, err := db.AddData(message); err != nil {
-	//	return err
-	//} else {
-	//	message.ID.SetValid(id)
-	//}
-	//return nil
-
-	return nil
+	return db.AddData(message)
 }
 
 func (message *Message) UpdateDB() error {

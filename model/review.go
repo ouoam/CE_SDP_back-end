@@ -13,7 +13,9 @@ type Review struct {
 	Time	null.Time	`json:"time" dont:"c"` //todo update time when update
 }
 
-//todo update time with now
+func (review *Review) SetID(id int64)  {
+	review.Tour.SetValid(id)
+}
 
 func (review *Review) GetDB() error {
 	//err := db.GetData(review.ID.Int64, review)
@@ -23,14 +25,7 @@ func (review *Review) GetDB() error {
 }
 
 func (review *Review) AddDB() error {
-	//if id, err := db.AddData(review); err != nil {
-	//	return err
-	//} else {
-	//	review.ID.SetValid(id)
-	//}
-	//return nil
-
-	return nil
+	return db.AddData(review)
 }
 
 func (review *Review) UpdateDB() error {

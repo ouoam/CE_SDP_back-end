@@ -10,6 +10,10 @@ type Favorite struct {
 	Tour	null.Int	`json:"tour" dont:"u" key:"p"`
 }
 
+func (favorite *Favorite) SetID(id int64)  {
+	favorite.Tour.SetValid(id)
+}
+
 func (favorite *Favorite) GetDB() error {
 	//err := db.GetData(favorite.ID.Int64, favorite)
 	//return err
@@ -18,14 +22,7 @@ func (favorite *Favorite) GetDB() error {
 }
 
 func (favorite *Favorite) AddDB() error {
-	//if id, err := db.AddData(favorite); err != nil {
-	//	return err
-	//} else {
-	//	favorite.ID.SetValid(id)
-	//}
-	//return nil
-
-	return nil
+	return db.AddData(favorite)
 }
 
 func (favorite *Favorite) UpdateDB() error {

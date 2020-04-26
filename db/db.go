@@ -33,10 +33,29 @@ func Init() {
 	fmt.Println("Successfully connected to database!")
 }
 
-func AddData(data interface{}) (int64, error) {
+func checkValid(v interface{}) bool {
+	var valid bool
+	switch v := v.(type) {
+	case *null.String:
+		valid = v.Valid
+	case *null.Int:
+		valid = v.Valid
+	case *null.Time:
+		valid = v.Valid
+	case *null.Float:
+		valid = v.Valid
+	case *null.Bool:
+		valid = v.Valid
+	}
+	return valid
+}
+
+func AddData(data interface{}) error {
 	var insertVal []interface{}
-	var insertSQL string
+	var returnVal []interface{}
+	var insertSqlList string
 	var insertSqlVal string
+	var returnSql string
 	var count = 1
 
 	stv := reflect.ValueOf(data).Elem()
@@ -47,37 +66,43 @@ func AddData(data interface{}) (int64, error) {
 			continue
 		}
 		v := field.Addr().Interface()
-		val, have := fieldType.Tag.Lookup("dont")
-		valid := false
-		switch v := v.(type) {
-		case *null.String:
-			valid = v.Valid
-		case *null.Int:
-			valid = v.Valid
-		case *null.Time:
-			valid = v.Valid
+		dont := fieldType.Tag.Get("dont")
+		valid := checkValid(v)
+		column := fieldType.Tag.Get("json")
+
+		// change column of reserved word
+		switch column {
+		case "user":
+			column = "\"user\""
+		case "from":
+			column = "\"from\""
+		case "to":
+			column = "\"to\""
 		}
-		if valid && (!have || (have && !strings.Contains(val, "c"))) {
-			insertSQL += fieldType.Tag.Get("json") + ", "
+
+		if valid && !strings.Contains(dont, "c") {
+			insertSqlList += column + ", "
 			insertVal = append(insertVal, v)
 			insertSqlVal += "$" + strconv.Itoa(count) + ", "
 			count++
+		} else {
+			returnSql += column + ", "
+			returnVal = append(returnVal, v)
 		}
 	}
 
 	if count == 1 {
-		return 0, errors.New("No data to update")
+		return errors.New("no data to create")
 	}
-	insertSQL = insertSQL[:len(insertSQL)-2]
+	insertSqlList = insertSqlList[:len(insertSqlList)-2]
 	insertSqlVal = insertSqlVal[:len(insertSqlVal)-2]
 
-	statement := "INSERT INTO public." + strings.ToLower(reflect.TypeOf(data).Elem().Name()) + " (" + insertSQL + ") "
-	statement += "VALUES (" + insertSqlVal + ") RETURNING id"
-
-	var id int64
-	err := db.QueryRow(statement, insertVal...).Scan(&id)
-
-	return id, err
+	statement := "INSERT INTO public." + strings.ToLower(reflect.TypeOf(data).Elem().Name())
+	statement += " (" + insertSqlList + ") VALUES (" + insertSqlVal + ")"
+	if len(returnSql) != 0 {
+		statement += " RETURNING " + returnSql[:len(returnSql)-2]
+	}
+	return db.QueryRow(statement, insertVal...).Scan(returnVal...)
 }
 
 func GetData(id int64, data interface{}) error {

@@ -13,7 +13,9 @@ type Transcript struct {
 	Time		null.Time	`json:"time" dont:"cu"`
 }
 
-// todo time dont get when create
+func (transcript *Transcript) SetID(id int64)  {
+	transcript.Tour.SetValid(id)
+}
 
 func (transcript *Transcript) GetDB() error {
 	//err := db.GetData(transcript.ID.Int64, transcript)
@@ -23,14 +25,7 @@ func (transcript *Transcript) GetDB() error {
 }
 
 func (transcript *Transcript) AddDB() error {
-	//if id, err := db.AddData(transcript); err != nil {
-	//	return err
-	//} else {
-	//	transcript.ID.SetValid(id)
-	//}
-	//return nil
-
-	return nil
+	return db.AddData(transcript)
 }
 
 func (transcript *Transcript) UpdateDB() error {

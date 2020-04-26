@@ -20,18 +20,17 @@ type Tour struct {
 
 // todo check first day will before last day
 
+func (tour *Tour) SetID(id int64)  {
+	tour.ID.SetValid(id)
+}
+
 func (tour *Tour) GetDB() error {
 	err := db.GetData(tour.ID.Int64, tour)
 	return err
 }
 
 func (tour *Tour) AddDB() error {
-	if id, err := db.AddData(tour); err != nil {
-		return err
-	} else {
-		tour.ID.SetValid(id)
-	}
-	return nil
+	return db.AddData(tour)
 }
 
 func (tour *Tour) UpdateDB() error {

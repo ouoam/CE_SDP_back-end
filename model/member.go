@@ -26,6 +26,10 @@ var (
 	emailRegexp = regexp.MustCompile("(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|\"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*\")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])")
 )
 
+func (member *Member) SetID(id int64)  {
+	member.ID.SetValid(id)
+}
+
 func (member *Member) preMember(isNew bool) error {
 	// TODO	- check id card https://th.wikipedia.org/wiki/Thai_ID https://th.wikipedia.org/wiki/ISO_3166-2:TH
 	//		- check username
@@ -71,10 +75,8 @@ func (member *Member) AddDB() error {
 		return err
 	}
 
-	if id, err := db.AddData(member); err != nil {
+	if err := db.AddData(member); err != nil {
 		return err
-	} else {
-		member.ID.SetValid(id)
 	}
 
 	_ = member.Password.UnmarshalText([]byte(""))

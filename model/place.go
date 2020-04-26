@@ -13,18 +13,17 @@ type Place struct {
 	Lon		null.Float	`json:"lon"`
 }
 
+func (place *Place) SetID(id int64)  {
+	place.ID.SetValid(id)
+}
+
 func (place *Place) GetDB() error {
 	err := db.GetData(place.ID.Int64, place)
 	return err
 }
 
 func (place *Place) AddDB() error {
-	if id, err := db.AddData(place); err != nil {
-		return err
-	} else {
-		place.ID.SetValid(id)
-	}
-	return nil
+	return db.AddData(place)
 }
 
 func (place *Place) UpdateDB() error {

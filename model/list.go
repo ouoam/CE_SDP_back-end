@@ -11,6 +11,10 @@ type List struct {
 	Place	null.Int	`json:"place"`
 }
 
+func (list *List) SetID(id int64)  {
+	list.Tour.SetValid(id)
+}
+
 func (list *List) GetDB() error {
 	//err := db.GetData(list.ID.Int64, list)
 	//return err
@@ -19,14 +23,7 @@ func (list *List) GetDB() error {
 }
 
 func (list *List) AddDB() error {
-	//if id, err := db.AddData(list); err != nil {
-	//	return err
-	//} else {
-	//	list.ID.SetValid(id)
-	//}
-	//return nil
-
-	return nil
+	return db.AddData(list)
 }
 
 func (list *List) UpdateDB() error {
