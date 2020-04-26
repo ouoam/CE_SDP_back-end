@@ -26,10 +26,7 @@ func (favorite *Favorite) AddDB() error {
 }
 
 func (favorite *Favorite) UpdateDB() error {
-	//err := db.UpdateDate(favorite.ID.Int64, favorite)
-	//return err
-
-	return nil
+	return db.UpdateDate(favorite)
 }
 
 func (favorite *Favorite) ListDB() ([]interface{}, error) {

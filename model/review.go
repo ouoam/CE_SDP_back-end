@@ -29,10 +29,7 @@ func (review *Review) AddDB() error {
 }
 
 func (review *Review) UpdateDB() error {
-	//err := db.UpdateDate(review.ID.Int64, review)
-	//return err
-
-	return nil
+	return db.UpdateDate(review)
 }
 
 func (review *Review) ListDB() ([]interface{}, error) {

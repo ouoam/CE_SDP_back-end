@@ -28,10 +28,7 @@ func (message *Message) AddDB() error {
 }
 
 func (message *Message) UpdateDB() error {
-	//err := db.UpdateDate(message.ID.Int64, message)
-	//return err
-
-	return nil
+	return db.UpdateDate(message)
 }
 
 func (message *Message) ListDB() ([]interface{}, error) {

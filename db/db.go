@@ -52,9 +52,9 @@ func checkValid(v interface{}) bool {
 
 func AddData(data interface{}) error {
 	var insertVal []interface{}
-	var returnVal []interface{}
 	var insertSqlList string
 	var insertSqlVal string
+	var returnVal []interface{}
 	var returnSql string
 	var count = 1
 
@@ -101,8 +101,10 @@ func AddData(data interface{}) error {
 	statement += " (" + insertSqlList + ") VALUES (" + insertSqlVal + ")"
 	if len(returnSql) != 0 {
 		statement += " RETURNING " + returnSql[:len(returnSql)-2]
+		return db.QueryRow(statement, insertVal...).Scan(returnVal...)
 	}
-	return db.QueryRow(statement, insertVal...).Scan(returnVal...)
+	_, err := db.Exec(statement, insertVal...)
+	return err
 }
 
 func GetData(id int64, data interface{}) error {
@@ -141,11 +143,13 @@ func GetData(id int64, data interface{}) error {
 	return err
 }
 
-func UpdateDate(id int64, data interface{}) error {
+func UpdateDate(data interface{}) error {
 	var updateVal []interface{}
-	var updateSQL string
+	var updateSQL []string
+	var whereVal []interface{}
+	var whereSQL []string
 	var returnVal []interface{}
-	var returnSQL string
+	var returnSQL []string
 	var count = 1
 
 	stv := reflect.ValueOf(data).Elem()
@@ -156,24 +160,34 @@ func UpdateDate(id int64, data interface{}) error {
 			continue
 		}
 		v := field.Addr().Interface()
-		val, have := fieldType.Tag.Lookup("dont")
-		valid := false
-		switch v := v.(type) {
-		case *null.String:
-			valid = v.Valid
-		case *null.Int:
-			valid = v.Valid
-		case *null.Time:
-			valid = v.Valid
+		dont := fieldType.Tag.Get("dont")
+		valid := checkValid(v)
+		column := fieldType.Tag.Get("json")
+		key := fieldType.Tag.Get("key")
+
+		// change column of reserved word
+		switch column {
+		case "user":
+			column = "\"user\""
+		case "from":
+			column = "\"from\""
+		case "to":
+			column = "\"to\""
 		}
-		if valid && (!have || (have && !strings.Contains(val, "u"))) {
-			updateSQL += fieldType.Tag.Get("json") + " = $" + strconv.Itoa(count) + ", "
+
+		if key == "p" {
+			if valid {
+				whereSQL = append(whereSQL, column)
+				whereVal = append(whereVal, v)
+			} else {
+				return errors.New("require key invalid")
+			}
+		} else if valid && !strings.Contains(dont, "u") {
+			updateSQL = append(updateSQL, column + " = $" + strconv.Itoa(count))
 			count++
 			updateVal = append(updateVal, v)
-		}
-		if (!valid && (!have || (have && !strings.Contains(val, "r")))) ||
-			(valid && (!have || (have && strings.Contains(val, "u")))) {
-			returnSQL += fieldType.Tag.Get("json") + ", "
+		} else {
+			returnSQL = append(returnSQL, column)
 			returnVal = append(returnVal, v)
 		}
 	}
@@ -181,16 +195,22 @@ func UpdateDate(id int64, data interface{}) error {
 	if count == 1 {
 		return errors.New("No data to update")
 	}
+	if len(whereSQL) == 0 {
+		return errors.New("no where statement")
+	}
+	for i := range whereSQL{
+		whereSQL[i] += " = $" + strconv.Itoa(count)
+		count++
+	}
 
 	statement := "UPDATE public." + strings.ToLower(reflect.TypeOf(data).Elem().Name())
-	statement += " SET " + updateSQL[:len(updateSQL)-2]
-	statement += " WHERE id=$" + strconv.Itoa(count)
-	updateVal = append(updateVal, id)
+	statement += " SET " + strings.Join(updateSQL, ", ")
+	statement += " WHERE " + strings.Join(whereSQL, " AND ")
+	updateVal = append(updateVal, whereVal...)
 
 	if len(returnSQL) != 0 {
-		statement += " RETURNING " + returnSQL[:len(returnSQL)-2]
-		err := db.QueryRow(statement, updateVal...).Scan(returnVal...)
-		return err
+		statement += " RETURNING " + strings.Join(returnSQL, ", ")
+		return db.QueryRow(statement, updateVal...).Scan(returnVal...)
 	}
 
 	_, err := db.Exec(statement, updateVal...)

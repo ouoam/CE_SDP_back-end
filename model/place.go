@@ -27,7 +27,7 @@ func (place *Place) AddDB() error {
 }
 
 func (place *Place) UpdateDB() error {
-	err := db.UpdateDate(place.ID.Int64, place)
+	err := db.UpdateDate(place)
 	return err
 }
 

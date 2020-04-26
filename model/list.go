@@ -27,10 +27,7 @@ func (list *List) AddDB() error {
 }
 
 func (list *List) UpdateDB() error {
-	//err := db.UpdateDate(list.ID.Int64, list)
-	//return err
-
-	return nil
+	return db.UpdateDate(list)
 }
 
 func (list *List) ListDB() ([]interface{}, error) {

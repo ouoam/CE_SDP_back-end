@@ -29,10 +29,7 @@ func (transcript *Transcript) AddDB() error {
 }
 
 func (transcript *Transcript) UpdateDB() error {
-	//err := db.UpdateDate(transcript.ID.Int64, transcript)
-	//return err
-
-	return nil
+	return db.UpdateDate(transcript)
 }
 
 func (transcript *Transcript) ListDB() ([]interface{}, error) {

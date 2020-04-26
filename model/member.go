@@ -88,7 +88,7 @@ func (member *Member) UpdateDB() error {
 		return err
 	}
 
-	if err := db.UpdateDate(member.ID.Int64, member); err != nil {
+	if err := db.UpdateDate(member); err != nil {
 		return err
 	}
 
