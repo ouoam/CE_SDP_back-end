@@ -20,9 +20,3 @@ type TourDetail struct {
 	Ratting		null.Float	`json:"ratting"`
 	Favorite	null.Int	`json:"favorite"`
 }
-
-// todo check first day will before last day
-
-func (tour *TourDetail) SetID(id int64)  {
-	tour.ID.SetValid(id)
-}

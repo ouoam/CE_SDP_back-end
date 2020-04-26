@@ -7,8 +7,10 @@ import (
 )
 
 func ReviewRoute(route *fiber.Group) {
-	route.Get("/:id", func(c *fiber.Ctx) {
+	route.Get("/:id", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {
 		review := new(model.Review)
+		review.Tour.SetValid(c.Locals("params_id").(int64))
+		review.User.SetValid(c.Locals("user_id").(int64))
 		controller.GetID(c, review)
 	})
 
@@ -17,13 +19,16 @@ func ReviewRoute(route *fiber.Group) {
 		controller.Post(c, review)
 	})
 
-	route.Put("/:id", controller.CheckLogin, func(c *fiber.Ctx) {
+	route.Put("/:id", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {
 		review := new(model.Review)
+		review.Tour.SetValid(c.Locals("params_id").(int64))
+		review.User.SetValid(c.Locals("user_id").(int64))
 		controller.PutID(c, review)
 	})
 
-	route.Get("/", func(c *fiber.Ctx) {
+	route.Get("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		review := new(model.Review)
+		review.User.SetValid(c.Locals("user_id").(int64))
 		controller.List(c, review)
 	})
 }

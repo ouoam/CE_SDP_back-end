@@ -18,7 +18,3 @@ type Tour struct {
 }
 
 // todo check first day will before last day
-
-func (tour *Tour) SetID(id int64)  {
-	tour.ID.SetValid(id)
-}

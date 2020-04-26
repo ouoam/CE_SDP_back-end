@@ -9,6 +9,7 @@ import (
 func PlaceRoute(route *fiber.Group) {
 	route.Get("/:id", func(c *fiber.Ctx) {
 		place := new(model.Place)
+		place.ID.SetValid(c.Locals("params_id").(int64))
 		controller.GetID(c, place)
 	})
 
@@ -19,6 +20,7 @@ func PlaceRoute(route *fiber.Group) {
 
 	route.Put("/:id", controller.CheckLogin, func(c *fiber.Ctx) {
 		place := new(model.Place)
+		place.ID.SetValid(c.Locals("params_id").(int64))
 		controller.PutID(c, place)
 	})
 

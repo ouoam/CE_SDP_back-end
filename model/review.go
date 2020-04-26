@@ -11,7 +11,3 @@ type Review struct {
 	Ratting	null.Int	`json:"ratting"`
 	Time	null.Time	`json:"time" dont:"c"` //todo update time when update
 }
-
-func (review *Review) SetID(id int64)  {
-	review.Tour.SetValid(id)
-}

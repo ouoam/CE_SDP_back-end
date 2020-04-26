@@ -7,10 +7,6 @@ import (
 	"strings"
 )
 
-type WithID interface {
-	SetID(id int64)
-}
-
 type WithPostGet interface {
 	PostGet() error
 }
@@ -19,7 +15,7 @@ type WithPreChange interface {
 	PreChange(isNew bool) error
 }
 
-func CheckValidAllPK(model WithID) error {
+func CheckValidAllPK(model interface{}) error {
 	stv := reflect.ValueOf(model).Elem()
 	for i := 0; i < stv.NumField(); i++ {
 		fieldType := stv.Type().Field(i)

@@ -11,7 +11,3 @@ type Place struct {
 	Lat		null.Float	`json:"lat"`
 	Lon		null.Float	`json:"lon"`
 }
-
-func (place *Place) SetID(id int64)  {
-	place.ID.SetValid(id)
-}

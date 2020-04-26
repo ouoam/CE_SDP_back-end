@@ -8,26 +8,13 @@ import (
 	"github.com/jinzhu/copier"
 	"net/http"
 	"reflect"
-	"strconv"
 	"strings"
 	"unsafe"
 )
 
 var schemaDecoderQuery = schema.NewDecoder()
 
-func GetID(c *fiber.Ctx, dataModel model.WithID) {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		if numError, ok := err.(*strconv.NumError); ok {
-			_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": numError.Err.Error()})
-			return
-		}
-		_ = c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-		return
-	}
-
-	dataModel.SetID(id)
-
+func GetID(c *fiber.Ctx, dataModel interface{}) {
 	if err := model.CheckValidAllPK(dataModel); err != nil {
 		_ = c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		return
@@ -59,7 +46,9 @@ func GetID(c *fiber.Ctx, dataModel model.WithID) {
 	}
 }
 
-func Post(c *fiber.Ctx, dataModel model.WithID) {
+func Post(c *fiber.Ctx, dataModel interface{}) {
+	// todo store pk and restore or valid
+
 	if err := c.BodyParser(dataModel); err != nil {
 		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		return
@@ -95,23 +84,13 @@ func Post(c *fiber.Ctx, dataModel model.WithID) {
 	}
 }
 
-func PutID(c *fiber.Ctx, dataModel model.WithID) {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 64)
-	if err != nil {
-		if numError, ok := err.(*strconv.NumError); ok {
-			_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": numError.Err.Error()})
-			return
-		}
-		_ = c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-		return
-	}
+func PutID(c *fiber.Ctx, dataModel interface{}) {
+	// todo store pk and restore or valid
 
 	if err := c.BodyParser(dataModel); err != nil {
 		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		return
 	}
-
-	dataModel.SetID(id)
 
 	v := reflect.ValueOf(dataModel)
 	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPreChange)(nil)).Elem()); isImpl {
@@ -143,7 +122,7 @@ func PutID(c *fiber.Ctx, dataModel model.WithID) {
 	}
 }
 
-func List(c *fiber.Ctx, dataModel model.WithID) {
+func List(c *fiber.Ctx, dataModel interface{}) {
 	var getString = func(b []byte) string {
 		return *(*string)(unsafe.Pointer(&b))
 	}

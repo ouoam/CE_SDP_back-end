@@ -195,8 +195,17 @@ func ListData(data interface{}) ([]interface{}, error) { // todo filter don't re
 		}
 		v := field.Addr().Interface()
 		valid := CheckValid(v)
+		column := fieldType.Tag.Get("json")
+		switch column {
+		case "user":
+			column = "\"user\""
+		case "from":
+			column = "\"from\""
+		case "to":
+			column = "\"to\""
+		}
 		if valid {
-			whereSQL = append(whereSQL, fieldType.Tag.Get("json")+" = $"+strconv.Itoa(count))
+			whereSQL = append(whereSQL, column + " = $"+strconv.Itoa(count))
 			count++
 			whereVal = append(whereVal, v)
 		}

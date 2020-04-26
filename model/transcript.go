@@ -7,11 +7,7 @@ import (
 type Transcript struct {
 	Tour		null.Int	`json:"tour" dont:"u" key:"p"`
 	User		null.Int	`json:"user" dont:"u" key:"p"`
-	File		null.String	`json:"file" dont:"u" key:"p"`
-	Confirm		null.Int	`json:"confirm"`
+	File		null.String	`json:"file" dont:"u"`
+	Confirm		null.Bool	`json:"confirm"`
 	Time		null.Time	`json:"time" dont:"cu"`
-}
-
-func (transcript *Transcript) SetID(id int64)  {
-	transcript.Tour.SetValid(id)
 }
