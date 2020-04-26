@@ -33,7 +33,7 @@ func Init() {
 	fmt.Println("Successfully connected to database!")
 }
 
-func checkValid(v interface{}) bool {
+func CheckValid(v interface{}) bool {
 	var valid bool
 	switch v := v.(type) {
 	case *null.String:
@@ -67,7 +67,7 @@ func AddData(data interface{}) error {
 		}
 		v := field.Addr().Interface()
 		dont := fieldType.Tag.Get("dont")
-		valid := checkValid(v)
+		valid := CheckValid(v)
 		column := fieldType.Tag.Get("json")
 
 		// change column of reserved word
@@ -107,42 +107,6 @@ func AddData(data interface{}) error {
 	return err
 }
 
-func GetData(id int64, data interface{}) error {
-	var getSQL string
-	var returnVal []interface{}
-
-	stv := reflect.ValueOf(data).Elem()
-	for i := 0; i < stv.NumField(); i++ {
-		fieldType := stv.Type().Field(i)
-		field := stv.Field(i)
-		if !field.CanInterface() {
-			continue
-		}
-		v := field.Addr().Interface()
-		val, have := fieldType.Tag.Lookup("dont")
-		valid := false
-		switch v := v.(type) {
-		case *null.String:
-			valid = v.Valid
-		case *null.Int:
-			valid = v.Valid
-		case *null.Time:
-			valid = v.Valid
-		}
-		if !valid && (!have || (have && !strings.Contains(val, "r"))) {
-			getSQL += fieldType.Tag.Get("json") + ", "
-			returnVal = append(returnVal, v)
-		}
-	}
-
-	getSQL = getSQL[:len(getSQL)-2]
-
-	statement := "SELECT " + getSQL + " FROM public." + strings.ToLower(reflect.TypeOf(data).Elem().Name()) + " WHERE id = $1"
-	err := db.QueryRow(statement, id).Scan(returnVal...)
-
-	return err
-}
-
 func UpdateDate(data interface{}) error {
 	var updateVal []interface{}
 	var updateSQL []string
@@ -161,7 +125,7 @@ func UpdateDate(data interface{}) error {
 		}
 		v := field.Addr().Interface()
 		dont := fieldType.Tag.Get("dont")
-		valid := checkValid(v)
+		valid := CheckValid(v)
 		column := fieldType.Tag.Get("json")
 		key := fieldType.Tag.Get("key")
 
@@ -230,15 +194,7 @@ func ListData(data interface{}) ([]interface{}, error) { // todo filter don't re
 			continue
 		}
 		v := field.Addr().Interface()
-		valid := false
-		switch v := v.(type) {
-		case *null.String:
-			valid = v.Valid
-		case *null.Int:
-			valid = v.Valid
-		case *null.Time:
-			valid = v.Valid
-		}
+		valid := CheckValid(v)
 		if valid {
 			whereSQL = append(whereSQL, fieldType.Tag.Get("json")+" = $"+strconv.Itoa(count))
 			count++

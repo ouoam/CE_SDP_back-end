@@ -1,7 +1,6 @@
 package model
 
 import (
-	"../db"
 	"gopkg.in/guregu/null.v3"
 )
 
@@ -14,24 +13,4 @@ type Message struct {
 
 func (message *Message) SetID(id int64)  {
 	message.To.SetValid(id)
-}
-
-func (message *Message) GetDB() error {
-	//err := db.GetData(message.ID.Int64, message)
-	//return err
-
-	return nil
-}
-
-func (message *Message) AddDB() error {
-	return db.AddData(message)
-}
-
-func (message *Message) UpdateDB() error {
-	return db.UpdateDate(message)
-}
-
-func (message *Message) ListDB() ([]interface{}, error) {
-	results, err := db.ListData(message)
-	return results, err
 }

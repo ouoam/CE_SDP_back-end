@@ -1,7 +1,6 @@
 package model
 
 import (
-	"../db"
 	"gopkg.in/guregu/null.v3"
 )
 
@@ -22,22 +21,4 @@ type Tour struct {
 
 func (tour *Tour) SetID(id int64)  {
 	tour.ID.SetValid(id)
-}
-
-func (tour *Tour) GetDB() error {
-	err := db.GetData(tour.ID.Int64, tour)
-	return err
-}
-
-func (tour *Tour) AddDB() error {
-	return db.AddData(tour)
-}
-
-func (tour *Tour) UpdateDB() error {
-	return db.UpdateDate(tour)
-}
-
-func (tour *Tour) ListDB() ([]interface{}, error) {
-	results, err := db.ListData(tour)
-	return results, err
 }
