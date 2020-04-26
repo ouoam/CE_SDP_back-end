@@ -6,8 +6,8 @@ import (
 )
 
 type Tour struct {
-	ID			null.Int	`json:"id" dont:"cu"`
-	OwnerID		null.Int	`json:"owner_id" dont:"u"`
+	ID			null.Int	`json:"id" dont:"cu" key:"p"`
+	Owner		null.Int	`json:"owner" dont:"u"`
 	Name		null.String	`json:"name"`
 	Description	null.String	`json:"description"`
 	Category	null.String	`json:"category"`
@@ -19,10 +19,6 @@ type Tour struct {
 }
 
 // todo check first day will before last day
-
-func (tour *Tour)SetID(id int64) {
-	tour.ID.SetValid(id)
-}
 
 func (tour *Tour) GetDB() error {
 	err := db.GetData(tour.ID.Int64, tour)

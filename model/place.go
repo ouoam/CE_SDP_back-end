@@ -6,14 +6,11 @@ import (
 )
 
 type Place struct {
-	ID		null.Int	`json:"id" dont:"cu"`
+	ID		null.Int	`json:"id" dont:"cu" key:"p"`
 	Name	null.String	`json:"name"`
 	Pic		null.String	`json:"pic"`
-	Geo		null.String	`json:"geo"`
-}
-
-func (place *Place)SetID(id int64) {
-	place.ID.SetValid(id)
+	Lat		null.Float	`json:"lat"`
+	Lon		null.Float	`json:"lon"`
 }
 
 func (place *Place) GetDB() error {
