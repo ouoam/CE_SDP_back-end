@@ -133,6 +133,7 @@ func List(c *fiber.Ctx, dataModel model.WithID) {
 	members, err := dataModel.ListDB()
 	if err != nil {
 		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return
 	}
 	_ = c.JSON(members)
 }

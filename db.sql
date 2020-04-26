@@ -114,15 +114,15 @@ alter table public.list
 
 create table public.transcript
 (
-    tour    integer               not null
+    tour    integer                 not null
         constraint transcript_tour_id_fk
             references public.tour,
-    "user"  integer               not null
+    "user"  integer                 not null
         constraint transcript_member_id_fk
             references public.member,
     file    varchar,
-    confirm boolean default false not null,
-    time    timestamp,
+    confirm boolean   default false not null,
+    time    timestamp default now() not null,
     constraint transcript_pk
         primary key (tour, "user")
 );
@@ -164,6 +164,30 @@ create table public.favorite
 );
 
 alter table public.favorite
+    owner to postgres;
+
+create view public.tourdetail
+            (id, owner, name, description, category, max_member, first_day, last_day, price, status, member, confirm,
+             ratting) as
+SELECT tu.id,
+       tu.owner,
+       tu.name,
+       tu.description,
+       tu.category,
+       tu.max_member,
+       tu.first_day,
+       tu.last_day,
+       tu.price,
+       tu.status,
+       count(ts.*)                      AS member,
+       count(NULLIF(false, ts.confirm)) AS confirm,
+       avg(re.ratting)                  AS ratting
+FROM tour tu
+         LEFT JOIN transcript ts ON ts.tour = tu.id
+         LEFT JOIN review re ON ts.tour = re.tour AND ts."user" = re."user"
+GROUP BY tu.id;
+
+alter table public.tourdetail
     owner to postgres;
 
 
