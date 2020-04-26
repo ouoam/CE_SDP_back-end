@@ -168,7 +168,8 @@ alter table public.favorite
 
 create view public.tourdetail
             (id, owner, name, description, category, max_member, first_day, last_day, price, status, member, confirm,
-             ratting) as
+             ratting, favorite)
+as
 SELECT tu.id,
        tu.owner,
        tu.name,
@@ -179,13 +180,27 @@ SELECT tu.id,
        tu.last_day,
        tu.price,
        tu.status,
-       count(ts.*)                      AS member,
-       count(NULLIF(false, ts.confirm)) AS confirm,
-       avg(re.ratting)                  AS ratting
-FROM tour tu
-         LEFT JOIN transcript ts ON ts.tour = tu.id
-         LEFT JOIN review re ON ts.tour = re.tour AND ts."user" = re."user"
-GROUP BY tu.id;
+       ts.member,
+       ts.confirm,
+       r.ratting,
+       f.favorite
+FROM tour tu,
+     (SELECT transcript.tour,
+             count(transcript."user")                 AS member,
+             count(NULLIF(false, transcript.confirm)) AS confirm
+      FROM transcript
+      GROUP BY transcript.tour) ts,
+     (SELECT favorite.tour,
+             count(favorite."user") AS favorite
+      FROM favorite
+      GROUP BY favorite.tour) f,
+     (SELECT review.tour,
+             avg(review.ratting) AS ratting
+      FROM review
+      GROUP BY review.tour) r
+WHERE tu.id = f.tour
+  AND tu.id = ts.tour
+  AND tu.id = r.tour;
 
 alter table public.tourdetail
     owner to postgres;

@@ -18,6 +18,7 @@ type TourDetail struct {
 	Member		null.Int	`json:"member"`
 	Confirm		null.Int	`json:"confirm"`
 	Ratting		null.Float	`json:"ratting"`
+	Favorite	null.Int	`json:"favorite"`
 }
 
 // todo check first day will before last day
