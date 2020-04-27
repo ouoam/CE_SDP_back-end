@@ -180,27 +180,24 @@ SELECT tu.id,
        tu.last_day,
        tu.price,
        tu.status,
-       ts.member,
-       ts.confirm,
-       r.ratting,
-       f.favorite
-FROM tour tu,
-     (SELECT transcript.tour,
-             count(transcript."user")                 AS member,
-             count(NULLIF(false, transcript.confirm)) AS confirm
-      FROM transcript
-      GROUP BY transcript.tour) ts,
-     (SELECT favorite.tour,
-             count(favorite."user") AS favorite
-      FROM favorite
-      GROUP BY favorite.tour) f,
-     (SELECT review.tour,
-             avg(review.ratting) AS ratting
-      FROM review
-      GROUP BY review.tour) r
-WHERE tu.id = f.tour
-  AND tu.id = ts.tour
-  AND tu.id = r.tour;
+       COALESCE(ts.member, 0::bigint)  AS member,
+       COALESCE(ts.confirm, 0::bigint) AS confirm,
+       COALESCE(r.ratting, 0::numeric) AS ratting,
+       COALESCE(f.favorite, 0::bigint) AS favorite
+FROM tour tu
+         LEFT JOIN (SELECT transcript.tour,
+                           count(transcript."user")                 AS member,
+                           count(NULLIF(false, transcript.confirm)) AS confirm
+                    FROM transcript
+                    GROUP BY transcript.tour) ts ON tu.id = ts.tour
+         LEFT JOIN (SELECT favorite.tour,
+                           count(favorite."user") AS favorite
+                    FROM favorite
+                    GROUP BY favorite.tour) f ON tu.id = f.tour
+         LEFT JOIN (SELECT review.tour,
+                           avg(review.ratting) AS ratting
+                    FROM review
+                    GROUP BY review.tour) r ON tu.id = r.tour;
 
 alter table public.tourdetail
     owner to postgres;

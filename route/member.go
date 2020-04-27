@@ -7,7 +7,7 @@ import (
 )
 
 func MemberRoute(route *fiber.Group) {
-	route.Get("/:id", controller.CheckLogin, func(c *fiber.Ctx) {
+	route.Get("/:id", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {
 		member := new(model.Member)
 		member.ID.SetValid(c.Locals("params_id").(int64))
 		controller.GetID(c, member)
@@ -18,10 +18,10 @@ func MemberRoute(route *fiber.Group) {
 		controller.Post(c, member)
 	})
 
-	route.Put("/:id", controller.CheckLogin, func(c *fiber.Ctx) {
+	route.Put("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		// todo check update own
 		member := new(model.Member)
-		member.ID.SetValid(c.Locals("params_id").(int64))
+		member.ID.SetValid(c.Locals("user_id").(int64))
 		controller.PutID(c, member)
 	})
 

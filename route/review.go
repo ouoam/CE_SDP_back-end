@@ -14,8 +14,10 @@ func ReviewRoute(route *fiber.Group) {
 		controller.GetID(c, review)
 	})
 
-	route.Post("/", controller.CheckLogin, func(c *fiber.Ctx) {
+	route.Post("/:id", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {
 		review := new(model.Review)
+		review.Tour.SetValid(c.Locals("params_id").(int64))
+		review.User.SetValid(c.Locals("user_id").(int64))
 		controller.Post(c, review)
 	})
 

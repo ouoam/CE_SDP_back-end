@@ -14,8 +14,10 @@ func TranscriptRoute(route *fiber.Group) {
 		controller.GetID(c, transcript)
 	})
 
-	route.Post("/", controller.CheckLogin, func(c *fiber.Ctx) {
+	route.Post("/:id", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {
 		transcript := new(model.Transcript)
+		transcript.Tour.SetValid(c.Locals("params_id").(int64))
+		transcript.User.SetValid(c.Locals("user_id").(int64))
 		controller.Post(c, transcript)
 	})
 

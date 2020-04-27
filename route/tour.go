@@ -7,7 +7,7 @@ import (
 )
 
 func TourRoute(route *fiber.Group) {
-	route.Get("/:id", func(c *fiber.Ctx) {
+	route.Get("/:id", parseIntParams("id"), func(c *fiber.Ctx) {
 		tour := new(model.TourDetail)
 		tour.ID.SetValid(c.Locals("params_id").(int64))
 		controller.GetID(c, tour)
@@ -15,13 +15,15 @@ func TourRoute(route *fiber.Group) {
 
 	route.Post("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		tour := new(model.Tour)
+		tour.Owner.SetValid(c.Locals("user_id").(int64))
 		controller.Post(c, tour)
 	})
 
-	route.Put("/:id", controller.CheckLogin, func(c *fiber.Ctx) {
+	route.Put("/:id", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {
 		// todo update own
 		tour := new(model.Tour)
 		tour.ID.SetValid(c.Locals("params_id").(int64))
+		tour.Owner.SetValid(c.Locals("user_id").(int64))
 		controller.PutID(c, tour)
 	})
 
