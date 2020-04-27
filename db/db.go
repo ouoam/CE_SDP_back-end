@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/lib/pq" //justify
+	"github.com/lib/pq"
 	"gopkg.in/guregu/null.v3"
 	"os"
 	"reflect"
@@ -243,7 +243,12 @@ func ListData(data interface{}, params... int64) ([]interface{}, error) { // tod
 				continue
 			}
 			v := field.Addr().Interface()
-			returnVal = append(returnVal, v)
+			switch field.Kind() {
+			case reflect.Slice, reflect.Array:
+				returnVal = append(returnVal, pq.Array(v))
+			default:
+				returnVal = append(returnVal, v)
+			}
 		}
 		err := rows.Scan(returnVal...)
 		if err != nil {

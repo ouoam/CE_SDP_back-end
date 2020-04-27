@@ -15,6 +15,7 @@ type Tour struct {
 	LastDay		null.Time	`json:"last_day"`
 	Price		null.Int	`json:"price"`
 	Status		null.Int	`json:"status"`
+	Pic			null.String	`json:"pic"`
 }
 
 // todo check first day will before last day

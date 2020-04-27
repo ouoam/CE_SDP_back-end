@@ -11,7 +11,8 @@ create table public.member
     email        varchar(30)           not null,
     bank_account bigint,
     address      text,
-    verify       boolean default false not null
+    verify       boolean default false not null,
+    pic          varchar
 );
 
 alter table public.member
@@ -61,7 +62,8 @@ create table public.tour
     first_day   date     not null,
     last_day    date     not null,
     price       integer  not null,
-    status      smallint not null
+    status      smallint not null,
+    pic         varchar
 );
 
 alter table public.tour
@@ -114,15 +116,15 @@ alter table public.list
 
 create table public.transcript
 (
-    tour    integer                 not null
+    tour    integer               not null
         constraint transcript_tour_id_fk
             references public.tour,
-    "user"  integer                 not null
+    "user"  integer               not null
         constraint transcript_member_id_fk
             references public.member,
     file    varchar,
-    confirm boolean   default false not null,
-    time    timestamp default now() not null,
+    confirm boolean default false not null,
+    time    timestamp             not null,
     constraint transcript_pk
         primary key (tour, "user")
 );
@@ -168,7 +170,7 @@ alter table public.favorite
 
 create view public.tourdetail
             (id, owner, name, description, category, max_member, first_day, last_day, price, status, member, confirm,
-             ratting, favorite)
+             ratting, favorite, g_name, g_surname, list)
 as
 SELECT tu.id,
        tu.owner,
@@ -183,7 +185,10 @@ SELECT tu.id,
        COALESCE(ts.member, 0::bigint)  AS member,
        COALESCE(ts.confirm, 0::bigint) AS confirm,
        COALESCE(r.ratting, 0::numeric) AS ratting,
-       COALESCE(f.favorite, 0::bigint) AS favorite
+       COALESCE(f.favorite, 0::bigint) AS favorite,
+       m.name                          AS g_name,
+       m.surname                       AS g_surname,
+       l.list
 FROM tour tu
          LEFT JOIN (SELECT transcript.tour,
                            count(transcript."user")                 AS member,
@@ -197,7 +202,17 @@ FROM tour tu
          LEFT JOIN (SELECT review.tour,
                            avg(review.ratting) AS ratting
                     FROM review
-                    GROUP BY review.tour) r ON tu.id = r.tour;
+                    GROUP BY review.tour) r ON tu.id = r.tour
+         LEFT JOIN member m ON tu.owner = m.id
+         LEFT JOIN (SELECT l_1.tour,
+                           array_agg(p.name) AS list
+                    FROM (SELECT list.tour,
+                                 list.seq,
+                                 list.place
+                          FROM list
+                          ORDER BY list.tour, list.seq) l_1
+                             LEFT JOIN place p ON l_1.place = p.id
+                    GROUP BY l_1.tour) l ON l.tour = tu.id;
 
 alter table public.tourdetail
     owner to postgres;
@@ -216,8 +231,8 @@ SELECT case when "from" = $1 then true else false end as me,
        message.message,
        time
 FROM message
-WHERE ("from" = $1 OR "to" = $1)
-  AND ("from" = $2 OR "to" = $2)
+WHERE ("from" = $1 AND "to" = $2)
+   OR ("from" = $2 AND "to" = $1)
 ORDER BY time DESC
 $$;
 
@@ -229,12 +244,15 @@ create function public.messagelistme(me integer)
                 contact integer,
                 me      boolean,
                 message text,
-                "time"  timestamp without time zone
+                "time"  timestamp without time zone,
+                name    text,
+                surname text,
+                pic     text
             )
     language sql
 as
 $$
-SELECT DISTINCT ON (a.contact) *
+SELECT DISTINCT ON (a.contact) a.*, m.name, m.surname, m.pic
 FROM (SELECT case when "from" = $1 then "to" else "from" end as contact,
              case when "from" = $1 then true else false end  as me,
              message.message,
@@ -242,7 +260,8 @@ FROM (SELECT case when "from" = $1 then "to" else "from" end as contact,
       FROM message
       WHERE "from" = $1
          OR "to" = $1
-      ORDER BY time DESC) as a;
+      ORDER BY time DESC) as a
+         LEFT JOIN member as m ON m.id = a.contact;
 $$;
 
 alter function public.messagelistme(integer) owner to postgres;

@@ -9,5 +9,5 @@ type Transcript struct {
 	User		null.Int	`json:"user" dont:"u" key:"p"`
 	File		null.String	`json:"file" dont:"u"`
 	Confirm		null.Bool	`json:"confirm"`
-	Time		null.Time	`json:"time" dont:"cu"`
+	Time		null.Time	`json:"time"`
 }
