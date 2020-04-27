@@ -205,4 +205,49 @@ WHERE tu.id = f.tour
 alter table public.tourdetail
     owner to postgres;
 
+create function public.messagewithme(me integer, contact integer)
+    returns TABLE
+            (
+                me      boolean,
+                message text,
+                "time"  timestamp without time zone
+            )
+    language sql
+as
+$$
+SELECT case when "from" = $1 then true else false end as me,
+       message.message,
+       time
+FROM message
+WHERE ("from" = $1 OR "to" = $1)
+  AND ("from" = $2 OR "to" = $2)
+ORDER BY time DESC
+$$;
+
+alter function public.messagewithme(integer, integer) owner to postgres;
+
+create function public.messagelistme(me integer)
+    returns TABLE
+            (
+                contact integer,
+                me      boolean,
+                message text,
+                "time"  timestamp without time zone
+            )
+    language sql
+as
+$$
+SELECT DISTINCT ON (a.contact) *
+FROM (SELECT case when "from" = $1 then "to" else "from" end as contact,
+             case when "from" = $1 then true else false end  as me,
+             message.message,
+             time
+      FROM message
+      WHERE "from" = $1
+         OR "to" = $1
+      ORDER BY time DESC) as a;
+$$;
+
+alter function public.messagelistme(integer) owner to postgres;
+
 

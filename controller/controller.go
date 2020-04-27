@@ -122,7 +122,7 @@ func PutID(c *fiber.Ctx, dataModel interface{}) {
 	}
 }
 
-func List(c *fiber.Ctx, dataModel interface{}) {
+func List(c *fiber.Ctx, dataModel interface{}, params... int64) {
 	var getString = func(b []byte) string {
 		return *(*string)(unsafe.Pointer(&b))
 	}
@@ -145,7 +145,7 @@ func List(c *fiber.Ctx, dataModel interface{}) {
 		}
 	}
 
-	results, err := db.ListData(dataModel)
+	results, err := db.ListData(dataModel, params...)
 	if err != nil {
 		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		return

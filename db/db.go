@@ -181,10 +181,17 @@ func UpdateDate(data interface{}) error {
 	return err
 }
 
-func ListData(data interface{}) ([]interface{}, error) { // todo filter don't read data
-	var whereVal []interface{}
+func ListData(data interface{}, params... int64) ([]interface{}, error) { // todo filter don't read data
+	var argsList []interface{}
 	var whereSQL []string
 	var count = 1
+	var fromParams []string
+
+	for _, param := range params {
+		fromParams = append(fromParams, "$" + strconv.Itoa(count))
+		count++
+		argsList = append(argsList, param)
+	}
 
 	stv := reflect.ValueOf(data).Elem()
 	for i := 0; i < stv.NumField(); i++ {
@@ -207,16 +214,19 @@ func ListData(data interface{}) ([]interface{}, error) { // todo filter don't re
 		if valid {
 			whereSQL = append(whereSQL, column + " = $"+strconv.Itoa(count))
 			count++
-			whereVal = append(whereVal, v)
+			argsList = append(argsList, v)
 		}
 	}
 
 	statement := "SELECT * FROM public." + strings.ToLower(reflect.TypeOf(data).Elem().Name())
+	if len(fromParams) != 0 {
+		statement += "(" + strings.Join(fromParams, ", ") + ")"
+	}
 	if len(whereSQL) != 0 {
 		statement += " WHERE " + strings.Join(whereSQL, " AND ")
 	}
 
-	rows, err := db.Query(statement, whereVal...)
+	rows, err := db.Query(statement, argsList...)
 	if err != nil {
 		return nil, err
 	}
