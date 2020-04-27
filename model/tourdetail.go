@@ -4,9 +4,9 @@ import (
 	"gopkg.in/guregu/null.v3"
 )
 
-type Tour struct {
-	ID			null.Int	`json:"id" dont:"cu" key:"p"`
-	Owner		null.Int	`json:"owner" dont:"u"`
+type TourDetail struct {
+	ID			null.Int	`json:"id" key:"p"`
+	Owner		null.Int	`json:"owner"`
 	Name		null.String	`json:"name"`
 	Description	null.String	`json:"description"`
 	Category	null.String	`json:"category"`
@@ -15,6 +15,8 @@ type Tour struct {
 	LastDay		null.Time	`json:"last_day"`
 	Price		null.Int	`json:"price"`
 	Status		null.Int	`json:"status"`
+	Member		null.Int	`json:"member"`
+	Confirm		null.Int	`json:"confirm"`
+	Ratting		null.Float	`json:"ratting"`
+	Favorite	null.Int	`json:"favorite"`
 }
-
-// todo check first day will before last day

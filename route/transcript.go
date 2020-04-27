@@ -7,23 +7,30 @@ import (
 )
 
 func TranscriptRoute(route *fiber.Group) {
-	route.Get("/:id", func(c *fiber.Ctx) {
+	route.Get("/:id", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {
 		transcript := new(model.Transcript)
+		transcript.Tour.SetValid(c.Locals("params_id").(int64))
+		transcript.User.SetValid(c.Locals("user_id").(int64))
 		controller.GetID(c, transcript)
 	})
 
-	route.Post("/", func(c *fiber.Ctx) {
+	route.Post("/:id", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {
 		transcript := new(model.Transcript)
+		transcript.Tour.SetValid(c.Locals("params_id").(int64))
+		transcript.User.SetValid(c.Locals("user_id").(int64))
 		controller.Post(c, transcript)
 	})
 
-	route.Put("/:id", func(c *fiber.Ctx) {
+	route.Put("/:id", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {
 		transcript := new(model.Transcript)
+		transcript.Tour.SetValid(c.Locals("params_id").(int64))
+		transcript.User.SetValid(c.Locals("user_id").(int64))
 		controller.PutID(c, transcript)
 	})
 
-	route.Get("/", func(c *fiber.Ctx) {
+	route.Get("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		transcript := new(model.Transcript)
+		transcript.User.SetValid(c.Locals("user_id").(int64))
 		controller.List(c, transcript)
 	})
 }

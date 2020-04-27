@@ -7,18 +7,20 @@ import (
 )
 
 func PlaceRoute(route *fiber.Group) {
-	route.Get("/:id", func(c *fiber.Ctx) {
+	route.Get("/:id", parseIntParams("id"), func(c *fiber.Ctx) {
 		place := new(model.Place)
+		place.ID.SetValid(c.Locals("params_id").(int64))
 		controller.GetID(c, place)
 	})
 
-	route.Post("/", func(c *fiber.Ctx) {
+	route.Post("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		place := new(model.Place)
 		controller.Post(c, place)
 	})
 
-	route.Put("/:id", func(c *fiber.Ctx) {
+	route.Put("/:id", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {
 		place := new(model.Place)
+		place.ID.SetValid(c.Locals("params_id").(int64))
 		controller.PutID(c, place)
 	})
 

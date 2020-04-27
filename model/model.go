@@ -1,9 +1,35 @@
 package model
 
-type WithID interface {
-	SetID(id int64)
-	GetDB() error
-	AddDB() error
-	UpdateDB() error
-	ListDB() ([]interface{}, error)
+import (
+	"../db"
+	"github.com/pkg/errors"
+	"reflect"
+	"strings"
+)
+
+type WithPostGet interface {
+	PostGet() error
+}
+
+type WithPreChange interface {
+	PreChange(isNew bool) error
+}
+
+func CheckValidAllPK(model interface{}) error {
+	stv := reflect.ValueOf(model).Elem()
+	for i := 0; i < stv.NumField(); i++ {
+		fieldType := stv.Type().Field(i)
+		field := stv.Field(i)
+		if !field.CanInterface() {
+			continue
+		}
+		v := field.Addr().Interface()
+		valid := db.CheckValid(v)
+		column := fieldType.Tag.Get("json")
+		key := fieldType.Tag.Get("key")
+		if strings.Contains(key, "p") && !valid {
+			return errors.New("field " + column + " is invalid")
+		}
+	}
+	return nil
 }
