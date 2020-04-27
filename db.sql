@@ -12,7 +12,8 @@ create table public.member
     bank_account bigint,
     address      text,
     verify       boolean default false not null,
-    pic          varchar
+    pic          varchar,
+    bank_name    varchar
 );
 
 alter table public.member
@@ -170,7 +171,7 @@ alter table public.favorite
 
 create view public.tourdetail
             (id, owner, name, description, category, max_member, first_day, last_day, price, status, member, confirm,
-             ratting, favorite, g_name, g_surname, list)
+             ratting, favorite, g_name, g_surname, bank_account, bank_name, list)
 as
 SELECT tu.id,
        tu.owner,
@@ -188,6 +189,8 @@ SELECT tu.id,
        COALESCE(f.favorite, 0::bigint) AS favorite,
        m.name                          AS g_name,
        m.surname                       AS g_surname,
+       m.bank_account,
+       m.bank_name,
        l.list
 FROM tour tu
          LEFT JOIN (SELECT transcript.tour,
