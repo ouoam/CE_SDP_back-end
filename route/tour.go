@@ -23,6 +23,19 @@ func TourRoute(route *fiber.Group) {
 		controller.List(c, transcript, c.Locals("params_id").(int64))
 	})
 
+	route.Get("/:id/transcripts/:user", controller.CheckLogin, parseIntParams("id", "user"), func(c *fiber.Ctx) {
+		transcript := new(model.TranscriptWithTour)
+		transcript.User.SetValid(c.Locals("params_user").(int64))
+		controller.GetID(c, transcript, c.Locals("params_id").(int64))
+	})
+
+	route.Post("/:id/transcripts/:user", controller.CheckLogin, parseIntParams("id", "user"), func(c *fiber.Ctx) {
+		transcript := new(model.Transcript)
+		transcript.Tour.SetValid(c.Locals("params_id").(int64))
+		transcript.User.SetValid(c.Locals("params_user").(int64))
+		controller.PutID(c, transcript)
+	})
+
 	route.Post("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		tour := new(model.Tour)
 		tour.Owner.SetValid(c.Locals("user_id").(int64))
