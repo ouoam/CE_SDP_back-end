@@ -4,6 +4,7 @@ import (
 	"../controller"
 	"../model"
 	"github.com/gofiber/fiber"
+	"net/http"
 )
 
 func TourRoute(route *fiber.Group) {
@@ -16,6 +17,21 @@ func TourRoute(route *fiber.Group) {
 	route.Get("/:id/reviews", parseIntParams("id"), func(c *fiber.Ctx) {
 		review := new(model.ReviewWithTour)
 		controller.List(c, review, c.Locals("params_id").(int64))
+	})
+
+	route.Get("/:id/lists", parseIntParams("id"), func(c *fiber.Ctx) {
+		list := new(model.ListWithTour)
+		controller.List(c, list, c.Locals("params_id").(int64))
+	})
+
+	route.Post("/:id/lists", parseIntParams("id"), func(c *fiber.Ctx) {
+		listBody := new(model.ListUpdateBody)
+		if err := c.BodyParser(listBody); err != nil {
+			_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return
+		}
+		list := new(model.ListUpdate)
+		controller.Get(c, list, c.Locals("params_id").(int64), listBody.Place)
 	})
 
 	route.Get("/:id/transcripts", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {

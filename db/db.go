@@ -190,7 +190,12 @@ func ListData(data interface{}, params... interface{}) ([]interface{}, error) { 
 	for _, param := range params {
 		fromParams = append(fromParams, "$" + strconv.Itoa(count))
 		count++
-		argsList = append(argsList, param)
+		switch reflect.ValueOf(param).Kind() {
+		case reflect.Slice, reflect.Array:
+			argsList = append(argsList, pq.Array(param))
+		default:
+			argsList = append(argsList, param)
+		}
 	}
 
 	stv := reflect.ValueOf(data).Elem()

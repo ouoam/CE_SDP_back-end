@@ -269,6 +269,28 @@ $$;
 
 alter function public.messagelistme(integer) owner to postgres;
 
+create function public.listupdate(tour integer, list integer[]) returns integer
+    language plpgsql
+as
+$$
+DECLARE
+    i int := 0;
+    x int;
+BEGIN
+    FOREACH x IN ARRAY $2
+        LOOP
+            EXECUTE
+                'INSERT INTO list(tour, seq, place) VALUES($1, $2, $3)
+                ON CONFLICT (tour, seq)
+                DO UPDATE SET place = excluded.place' USING $1, i, x;
+            i := i + 1;
+        END LOOP;
+    EXECUTE 'DELETE FROM list WHERE tour = $1 AND seq >= $2' USING $1, i;
+    RETURN i;
+END;
+$$;
+
+alter function public.listupdate(integer, integer[]) owner to postgres;
 
 create function public.reviewwithuser("user" integer)
     returns TABLE
@@ -355,3 +377,26 @@ ORDER BY t.time DESC ;
 $$;
 
 alter function public.transcriptwithtour(integer) owner to postgres;
+
+create function public.listwithtour(tour integer)
+    returns TABLE
+            (
+                id   integer,
+                name text,
+                pic  text,
+                lat  double precision,
+                lon  double precision
+            )
+    language sql
+as
+$$
+SELECT p.*
+FROM list l
+         LEFT JOIN place p on l.place = p.id
+WHERE l.tour = $1
+ORDER BY l.seq;
+$$;
+
+alter function public.listwithtour(integer) owner to postgres;
+
+

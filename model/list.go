@@ -10,6 +10,18 @@ type List struct {
 	Place	null.Int	`json:"place"`
 }
 
-func (list *List) SetID(id int64)  {
-	list.Tour.SetValid(id)
+type ListWithTour struct {
+	ID		null.Int	`json:"id"`
+	Name	null.String	`json:"name"`
+	Pic		null.String	`json:"pic"`
+	Lat		null.Float	`json:"lat"`
+	Lon		null.Float	`json:"lon"`
+}
+
+type ListUpdate struct {
+	ListUpdate	null.Int	`json:"list_update"`
+}
+
+type ListUpdateBody struct {
+	Place	[]int64	`json:"place"`
 }
