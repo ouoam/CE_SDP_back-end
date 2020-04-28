@@ -14,7 +14,7 @@ import (
 
 var schemaDecoderQuery = schema.NewDecoder()
 
-func GetID(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
+func Get(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
 	if err := model.CheckValidAllPK(dataModel); err != nil {
 		_ = c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		return
@@ -46,7 +46,7 @@ func GetID(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
 	}
 }
 
-func Post(c *fiber.Ctx, dataModel interface{}) {
+func New(c *fiber.Ctx, dataModel interface{}) {
 	// todo store pk and restore or valid
 
 	if err := c.BodyParser(dataModel); err != nil {
@@ -84,7 +84,7 @@ func Post(c *fiber.Ctx, dataModel interface{}) {
 	}
 }
 
-func PutID(c *fiber.Ctx, dataModel interface{}) {
+func Update(c *fiber.Ctx, dataModel interface{}) {
 	// todo store pk and restore or valid
 
 	if err := c.BodyParser(dataModel); err != nil {

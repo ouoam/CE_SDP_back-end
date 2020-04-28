@@ -15,10 +15,6 @@ import (
 	"time"
 )
 
-type LoginData struct {
-	ID int64
-}
-
 func Login(c *fiber.Ctx) {
 	input := new(model.Member)
 	if err := c.BodyParser(input); err != nil {

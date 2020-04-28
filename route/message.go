@@ -16,7 +16,7 @@ func MessageRoute(route *fiber.Group) {
 		message := new(model.Message)
 		message.From.SetValid(c.Locals("user_id").(int64))
 		message.To.SetValid(c.Locals("params_id").(int64))
-		controller.Post(c, message)
+		controller.New(c, message)
 	})
 
 	route.Get("/", controller.CheckLogin, func(c *fiber.Ctx) {
