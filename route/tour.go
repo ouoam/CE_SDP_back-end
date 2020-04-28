@@ -13,6 +13,16 @@ func TourRoute(route *fiber.Group) {
 		controller.GetID(c, tour)
 	})
 
+	route.Get("/:id/reviews", parseIntParams("id"), func(c *fiber.Ctx) {
+		review := new(model.ReviewWithTour)
+		controller.List(c, review, c.Locals("params_id").(int64))
+	})
+
+	route.Get("/:id/transcripts", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {
+		transcript := new(model.TranscriptWithTour)
+		controller.List(c, transcript, c.Locals("params_id").(int64))
+	})
+
 	route.Post("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		tour := new(model.Tour)
 		tour.Owner.SetValid(c.Locals("user_id").(int64))

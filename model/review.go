@@ -13,9 +13,18 @@ type Review struct {
 }
 
 type ReviewWithUser struct {
-	Tour	null.Int	`json:"tour" dont:"u" key:"p"`
+	Tour	null.Int	`json:"tour" key:"p"`
 	Comment	null.String	`json:"comment"`
 	Ratting	null.Int	`json:"ratting"`
-	Time	null.Time	`json:"time" dont:"c"`
+	Time	null.Time	`json:"time"`
 	Name	null.String	`json:"name"`
+}
+
+type ReviewWithTour struct {
+	User	null.Int	`json:"user" key:"p"`
+	Comment	null.String	`json:"comment"`
+	Ratting	null.Int	`json:"ratting"`
+	Time	null.Time	`json:"time"`
+	Name	null.String	`json:"name"`
+	Surname	null.String	`json:"surname"`
 }
