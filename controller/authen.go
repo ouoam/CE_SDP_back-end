@@ -15,10 +15,6 @@ import (
 	"time"
 )
 
-type LoginData struct {
-	ID int64
-}
-
 func Login(c *fiber.Ctx) {
 	input := new(model.Member)
 	if err := c.BodyParser(input); err != nil {
@@ -40,7 +36,7 @@ func Login(c *fiber.Ctx) {
 		Email: input.Email,
 	}
 
-	members, err := db.ListData(&member)
+	members, err := db.ListData(&member, nil)
 	if err != nil {
 		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		return
@@ -128,7 +124,7 @@ func ForgotPassword(c *fiber.Ctx) {
 		Email: input.Email,
 	}
 
-	members, err := db.ListData(&member)
+	members, err := db.ListData(&member, nil)
 	if err != nil {
 		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		return

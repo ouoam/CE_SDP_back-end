@@ -11,7 +11,9 @@ create table public.member
     email        varchar(30)           not null,
     bank_account bigint,
     address      text,
-    verify       boolean default false not null
+    verify       boolean default false not null,
+    pic          varchar,
+    bank_name    varchar
 );
 
 alter table public.member
@@ -61,7 +63,8 @@ create table public.tour
     first_day   date     not null,
     last_day    date     not null,
     price       integer  not null,
-    status      smallint not null
+    status      smallint not null,
+    pic         varchar
 );
 
 alter table public.tour
@@ -114,15 +117,15 @@ alter table public.list
 
 create table public.transcript
 (
-    tour    integer                 not null
+    tour    integer               not null
         constraint transcript_tour_id_fk
             references public.tour,
-    "user"  integer                 not null
+    "user"  integer               not null
         constraint transcript_member_id_fk
             references public.member,
     file    varchar,
-    confirm boolean   default false not null,
-    time    timestamp default now() not null,
+    confirm boolean default false not null,
+    time    timestamp             not null,
     constraint transcript_pk
         primary key (tour, "user")
 );
@@ -168,7 +171,7 @@ alter table public.favorite
 
 create view public.tourdetail
             (id, owner, name, description, category, max_member, first_day, last_day, price, status, member, confirm,
-             ratting, favorite)
+             ratting, favorite, g_name, g_surname, bank_account, bank_name, list)
 as
 SELECT tu.id,
        tu.owner,
@@ -183,7 +186,12 @@ SELECT tu.id,
        COALESCE(ts.member, 0::bigint)  AS member,
        COALESCE(ts.confirm, 0::bigint) AS confirm,
        COALESCE(r.ratting, 0::numeric) AS ratting,
-       COALESCE(f.favorite, 0::bigint) AS favorite
+       COALESCE(f.favorite, 0::bigint) AS favorite,
+       m.name                          AS g_name,
+       m.surname                       AS g_surname,
+       m.bank_account,
+       m.bank_name,
+       l.list
 FROM tour tu
          LEFT JOIN (SELECT transcript.tour,
                            count(transcript."user")                 AS member,
@@ -197,7 +205,17 @@ FROM tour tu
          LEFT JOIN (SELECT review.tour,
                            avg(review.ratting) AS ratting
                     FROM review
-                    GROUP BY review.tour) r ON tu.id = r.tour;
+                    GROUP BY review.tour) r ON tu.id = r.tour
+         LEFT JOIN member m ON tu.owner = m.id
+         LEFT JOIN (SELECT l_1.tour,
+                           array_agg(p.name) AS list
+                    FROM (SELECT list.tour,
+                                 list.seq,
+                                 list.place
+                          FROM list
+                          ORDER BY list.tour, list.seq) l_1
+                             LEFT JOIN place p ON l_1.place = p.id
+                    GROUP BY l_1.tour) l ON l.tour = tu.id;
 
 alter table public.tourdetail
     owner to postgres;
@@ -216,8 +234,8 @@ SELECT case when "from" = $1 then true else false end as me,
        message.message,
        time
 FROM message
-WHERE ("from" = $1 OR "to" = $1)
-  AND ("from" = $2 OR "to" = $2)
+WHERE ("from" = $1 AND "to" = $2)
+   OR ("from" = $2 AND "to" = $1)
 ORDER BY time DESC
 $$;
 
@@ -229,12 +247,15 @@ create function public.messagelistme(me integer)
                 contact integer,
                 me      boolean,
                 message text,
-                "time"  timestamp without time zone
+                "time"  timestamp without time zone,
+                name    text,
+                surname text,
+                pic     text
             )
     language sql
 as
 $$
-SELECT DISTINCT ON (a.contact) *
+SELECT DISTINCT ON (a.contact) a.*, m.name, m.surname, m.pic
 FROM (SELECT case when "from" = $1 then "to" else "from" end as contact,
              case when "from" = $1 then true else false end  as me,
              message.message,
@@ -242,9 +263,174 @@ FROM (SELECT case when "from" = $1 then "to" else "from" end as contact,
       FROM message
       WHERE "from" = $1
          OR "to" = $1
-      ORDER BY time DESC) as a;
+      ORDER BY time DESC) as a
+         LEFT JOIN member as m ON m.id = a.contact;
 $$;
 
 alter function public.messagelistme(integer) owner to postgres;
+
+create function public.listupdate(tour integer, list integer[]) returns integer
+    language plpgsql
+as
+$$
+DECLARE
+    i int := 0;
+    x int;
+BEGIN
+    FOREACH x IN ARRAY $2
+        LOOP
+            EXECUTE
+                'INSERT INTO list(tour, seq, place) VALUES($1, $2, $3)
+                ON CONFLICT (tour, seq)
+                DO UPDATE SET place = excluded.place' USING $1, i, x;
+            i := i + 1;
+        END LOOP;
+    EXECUTE 'DELETE FROM list WHERE tour = $1 AND seq >= $2' USING $1, i;
+    RETURN i;
+END;
+$$;
+
+alter function public.listupdate(integer, integer[]) owner to postgres;
+
+create function public.reviewwithuser("user" integer)
+    returns TABLE
+            (
+                tour    integer,
+                comment text,
+                ratting smallint,
+                "time"  timestamp without time zone,
+                name    text
+            )
+    language sql
+as
+$$
+SELECT r.tour, r.comment, r.ratting, r.time, t.name
+FROM review r
+         LEFT JOIN tour t on r.tour = t.id
+WHERE r."user" = $1
+ORDER BY r.time DESC ;
+$$;
+
+alter function public.reviewwithuser(integer) owner to postgres;
+
+create function public.reviewwithtour(tour integer)
+    returns TABLE
+            (
+                "user"  integer,
+                comment text,
+                ratting smallint,
+                "time"  timestamp without time zone,
+                name    text,
+                surname text
+            )
+    language sql
+as
+$$
+SELECT r."user", r.comment, r.ratting, r.time, m.name, m.surname
+FROM review r
+         LEFT JOIN member m on r."user" = m.id
+WHERE r.tour = 11
+ORDER BY r.time DESC ;
+$$;
+
+alter function public.reviewwithtour(integer) owner to postgres;
+
+create function public.transcriptwithuser("user" integer)
+    returns TABLE
+            (
+                tour    integer,
+                file    text,
+                confirm boolean,
+                "time"  timestamp without time zone,
+                name    text
+            )
+    language sql
+as
+$$
+SELECT t.tour, t.file, t.confirm, t.time, t2.name
+FROM transcript t
+         LEFT JOIN tour t2 on t.tour = t2.id
+WHERE t."user" = $1
+ORDER BY t.time DESC ;
+$$;
+
+alter function public.transcriptwithuser(integer) owner to postgres;
+
+create function public.transcriptwithtour(tour integer)
+    returns TABLE
+            (
+                "user"  integer,
+                file    text,
+                confirm boolean,
+                "time"  timestamp without time zone,
+                name    text,
+                surname text
+            )
+    language sql
+as
+$$
+SELECT t."user", t.file, t.confirm, t.time, m.name, m.surname
+FROM transcript t
+         LEFT JOIN member m on t."user" = m.id
+WHERE t.tour = $1
+ORDER BY t.time DESC ;
+$$;
+
+alter function public.transcriptwithtour(integer) owner to postgres;
+
+create function public.listwithtour(tour integer)
+    returns TABLE
+            (
+                id   integer,
+                name text,
+                pic  text,
+                lat  double precision,
+                lon  double precision
+            )
+    language sql
+as
+$$
+SELECT p.*
+FROM list l
+         LEFT JOIN place p on l.place = p.id
+WHERE l.tour = $1
+ORDER BY l.seq;
+$$;
+
+alter function public.listwithtour(integer) owner to postgres;
+
+create function public.tourdetailsearch(keyword text)
+    returns TABLE
+            (
+                id           integer,
+                owner        integer,
+                name         text,
+                description  text,
+                category     text,
+                max_member   integer,
+                first_day    date,
+                last_day     date,
+                price        integer,
+                status       smallint,
+                member       bigint,
+                confirm      bigint,
+                ratting      numeric,
+                favorite     bigint,
+                g_name       text,
+                g_surname    text,
+                bank_account bigint,
+                bank_name    text,
+                list         character varying[]
+            )
+    language sql
+as
+$$
+SELECT *
+FROM tourdetail
+WHERE description LIKE ('%' || $1 || '%')
+   OR name LIKE ('%' || $1 || '%');
+$$;
+
+alter function public.tourdetailsearch(text) owner to postgres;
 
 

@@ -41,18 +41,20 @@ func Init() {
 	}
 }
 
-func parseIntParams(params string) func(c *fiber.Ctx) {
+func parseIntParams(params... string) func(c *fiber.Ctx) {
 	return func(c *fiber.Ctx) {
-		id, err := strconv.ParseInt(c.Params(params), 10, 64)
-		if err != nil {
-			if numError, ok := err.(*strconv.NumError); ok {
-				_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": numError.Err.Error()})
+		for _, param := range params {
+			id, err := strconv.ParseInt(c.Params(param), 10, 64)
+			if err != nil {
+				if numError, ok := err.(*strconv.NumError); ok {
+					_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": numError.Err.Error()})
+					return
+				}
+				_ = c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 				return
 			}
-			_ = c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-			return
+			c.Locals("params_" + param, id)
 		}
-		c.Locals("params_" + params, id)
 		c.Next()
 		return
 	}

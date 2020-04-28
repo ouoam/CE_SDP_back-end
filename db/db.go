@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	_ "github.com/lib/pq" //justify
+	"github.com/lib/pq"
 	"gopkg.in/guregu/null.v3"
 	"os"
 	"reflect"
@@ -50,6 +50,18 @@ func CheckValid(v interface{}) bool {
 	return valid
 }
 
+func EscapeReserveWord(column string) string {
+	switch column {
+	case "user":
+		return "\"user\""
+	case "from":
+		return "\"from\""
+	case "to":
+		return "\"to\""
+	}
+	return column
+}
+
 func AddData(data interface{}) error {
 	var insertVal []interface{}
 	var insertSqlList string
@@ -68,18 +80,7 @@ func AddData(data interface{}) error {
 		v := field.Addr().Interface()
 		dont := fieldType.Tag.Get("dont")
 		valid := CheckValid(v)
-		column := fieldType.Tag.Get("json")
-
-		// change column of reserved word
-		switch column {
-		case "user":
-			column = "\"user\""
-		case "from":
-			column = "\"from\""
-		case "to":
-			column = "\"to\""
-		}
-
+		column := EscapeReserveWord(fieldType.Tag.Get("json"))
 		if valid && !strings.Contains(dont, "c") {
 			insertSqlList += column + ", "
 			insertVal = append(insertVal, v)
@@ -126,19 +127,8 @@ func UpdateDate(data interface{}) error {
 		v := field.Addr().Interface()
 		dont := fieldType.Tag.Get("dont")
 		valid := CheckValid(v)
-		column := fieldType.Tag.Get("json")
+		column := EscapeReserveWord(fieldType.Tag.Get("json"))
 		key := fieldType.Tag.Get("key")
-
-		// change column of reserved word
-		switch column {
-		case "user":
-			column = "\"user\""
-		case "from":
-			column = "\"from\""
-		case "to":
-			column = "\"to\""
-		}
-
 		if key == "p" {
 			if valid {
 				whereSQL = append(whereSQL, column)
@@ -181,16 +171,28 @@ func UpdateDate(data interface{}) error {
 	return err
 }
 
-func ListData(data interface{}, params... int64) ([]interface{}, error) { // todo filter don't read data
+func ListData(data interface{}, filter *Filter, params... interface{}) ([]interface{}, error) { // todo filter don't read data
 	var argsList []interface{}
 	var whereSQL []string
 	var count = 1
 	var fromParams []string
 
+	if filter != nil {
+		filter.PreUse()
+		if len(params) == 0 && filter.Search.Valid {
+			params = append(params, filter.Search.String)
+		}
+	}
+
 	for _, param := range params {
 		fromParams = append(fromParams, "$" + strconv.Itoa(count))
 		count++
-		argsList = append(argsList, param)
+		switch reflect.ValueOf(param).Kind() {
+		case reflect.Slice, reflect.Array:
+			argsList = append(argsList, pq.Array(param))
+		default:
+			argsList = append(argsList, param)
+		}
 	}
 
 	stv := reflect.ValueOf(data).Elem()
@@ -202,19 +204,16 @@ func ListData(data interface{}, params... int64) ([]interface{}, error) { // tod
 		}
 		v := field.Addr().Interface()
 		valid := CheckValid(v)
-		column := fieldType.Tag.Get("json")
-		switch column {
-		case "user":
-			column = "\"user\""
-		case "from":
-			column = "\"from\""
-		case "to":
-			column = "\"to\""
-		}
+		column := EscapeReserveWord(fieldType.Tag.Get("json"))
 		if valid {
-			whereSQL = append(whereSQL, column + " = $"+strconv.Itoa(count))
+			whereSQL = append(whereSQL, column + " = $" + strconv.Itoa(count))
 			count++
 			argsList = append(argsList, v)
+		}
+		if filter != nil {
+			if filter.Order.String == column {
+				filter.Valid = true
+			}
 		}
 	}
 
@@ -226,6 +225,26 @@ func ListData(data interface{}, params... int64) ([]interface{}, error) { // tod
 		statement += " WHERE " + strings.Join(whereSQL, " AND ")
 	}
 
+	if filter != nil {
+		if filter.Order.Valid {
+			if filter.Valid {
+				statement += " ORDER BY " + filter.Order.String
+				if filter.Desc {
+					statement += " DESC"
+				}
+			} else {
+				return nil, errors.New("can not order by " + filter.Order.String)
+			}
+		}
+		statement += " LIMIT $" + strconv.Itoa(count)
+		count++
+		argsList = append(argsList, filter.Limit.Int64)
+		if filter.Offset.Valid {
+			statement += " OFFSET $" + strconv.Itoa(count)
+			count++
+			argsList = append(argsList, filter.Offset.Int64)
+		}
+	}
 	rows, err := db.Query(statement, argsList...)
 	if err != nil {
 		return nil, err
@@ -243,7 +262,12 @@ func ListData(data interface{}, params... int64) ([]interface{}, error) { // tod
 				continue
 			}
 			v := field.Addr().Interface()
-			returnVal = append(returnVal, v)
+			switch field.Kind() {
+			case reflect.Slice, reflect.Array:
+				returnVal = append(returnVal, pq.Array(v))
+			default:
+				returnVal = append(returnVal, v)
+			}
 		}
 		err := rows.Scan(returnVal...)
 		if err != nil {

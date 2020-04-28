@@ -14,13 +14,21 @@ import (
 
 var schemaDecoderQuery = schema.NewDecoder()
 
-func GetID(c *fiber.Ctx, dataModel interface{}) {
+func Get(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
 	if err := model.CheckValidAllPK(dataModel); err != nil {
 		_ = c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		return
 	}
 
-	results, err := db.ListData(dataModel)
+	filter := new(db.Filter)
+
+	v := reflect.ValueOf(dataModel)
+	if isImpl := v.Type().Implements(reflect.TypeOf((*model.CanSearch)(nil)).Elem()); isImpl {
+		params = nil
+		filter.Search.SetValid("")
+	}
+
+	results, err := db.ListData(dataModel, filter, params...)
 	if err != nil {
 		_ = c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		return
@@ -35,7 +43,6 @@ func GetID(c *fiber.Ctx, dataModel interface{}) {
 
 	_ = copier.Copy(dataModel, results[0])
 
-	v := reflect.ValueOf(dataModel)
 	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPostGet)(nil)).Elem()); isImpl {
 		_ = dataModel.(model.WithPostGet).PostGet()
 	}
@@ -46,7 +53,7 @@ func GetID(c *fiber.Ctx, dataModel interface{}) {
 	}
 }
 
-func Post(c *fiber.Ctx, dataModel interface{}) {
+func New(c *fiber.Ctx, dataModel interface{}) {
 	// todo store pk and restore or valid
 
 	if err := c.BodyParser(dataModel); err != nil {
@@ -84,7 +91,7 @@ func Post(c *fiber.Ctx, dataModel interface{}) {
 	}
 }
 
-func PutID(c *fiber.Ctx, dataModel interface{}) {
+func Update(c *fiber.Ctx, dataModel interface{}) {
 	// todo store pk and restore or valid
 
 	if err := c.BodyParser(dataModel); err != nil {
@@ -122,10 +129,12 @@ func PutID(c *fiber.Ctx, dataModel interface{}) {
 	}
 }
 
-func List(c *fiber.Ctx, dataModel interface{}, params... int64) {
+func List(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
 	var getString = func(b []byte) string {
 		return *(*string)(unsafe.Pointer(&b))
 	}
+
+	filter := new(db.Filter)
 
 	// query Params
 	if c.Fasthttp.QueryArgs().Len() > 0 {
@@ -138,19 +147,37 @@ func List(c *fiber.Ctx, dataModel interface{}, params... int64) {
 			_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 			return
 		}
+		if err := schemaDecoderQuery.Decode(filter, data); err != nil {
+			_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return
+		}
 	} else if c.Body() != "" {
 		if err := c.BodyParser(dataModel); err != nil {
 			_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 			return
 		}
+		if err := c.BodyParser(filter); err != nil {
+			_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return
+		}
 	}
 
-	results, err := db.ListData(dataModel, params...)
+	v := reflect.ValueOf(dataModel)
+	if isImpl := v.Type().Implements(reflect.TypeOf((*model.CanSearch)(nil)).Elem()); isImpl {
+		params = nil
+		if !filter.Search.Valid {
+			filter.Search.SetValid("")
+		}
+	} else {
+		filter.Search.UnmarshalText([]byte(""))
+	}
+
+	results, err := db.ListData(dataModel, filter, params...)
 	if err != nil {
 		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		return
 	}
-	v := reflect.ValueOf(dataModel)
+
 	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPostGet)(nil)).Elem()); isImpl {
 		for i := range results {
 			_ = results[i].(model.WithPostGet).PostGet()
