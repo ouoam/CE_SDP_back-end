@@ -313,28 +313,6 @@ $$;
 
 alter function public.reviewwithuser(integer) owner to postgres;
 
-create function public.reviewwithtour(tour integer)
-    returns TABLE
-            (
-                "user"  integer,
-                comment text,
-                ratting smallint,
-                "time"  timestamp without time zone,
-                name    text,
-                surname text
-            )
-    language sql
-as
-$$
-SELECT r."user", r.comment, r.ratting, r.time, m.name, m.surname
-FROM review r
-         LEFT JOIN member m on r."user" = m.id
-WHERE r.tour = 11
-ORDER BY r.time DESC ;
-$$;
-
-alter function public.reviewwithtour(integer) owner to postgres;
-
 create function public.transcriptwithuser("user" integer)
     returns TABLE
             (
@@ -432,5 +410,27 @@ WHERE description LIKE ('%' || $1 || '%')
 $$;
 
 alter function public.tourdetailsearch(text) owner to postgres;
+
+create function public.reviewwithtour(tour integer)
+    returns TABLE
+            (
+                "user"  integer,
+                comment text,
+                ratting smallint,
+                "time"  timestamp without time zone,
+                name    text,
+                surname text
+            )
+    language sql
+as
+$$
+SELECT r."user", r.comment, r.ratting, r.time, m.name, m.surname
+FROM review r
+         LEFT JOIN member m on r."user" = m.id
+WHERE r.tour = $1
+ORDER BY r.time DESC ;
+$$;
+
+alter function public.reviewwithtour(integer) owner to postgres;
 
 
