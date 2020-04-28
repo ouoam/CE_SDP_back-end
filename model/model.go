@@ -15,6 +15,10 @@ type WithPreChange interface {
 	PreChange(isNew bool) error
 }
 
+type CanSearch interface {
+	CanSearch() bool
+}
+
 func CheckValidAllPK(model interface{}) error {
 	stv := reflect.ValueOf(model).Elem()
 	for i := 0; i < stv.NumField(); i++ {

@@ -36,7 +36,7 @@ func Login(c *fiber.Ctx) {
 		Email: input.Email,
 	}
 
-	members, err := db.ListData(&member)
+	members, err := db.ListData(&member, nil)
 	if err != nil {
 		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		return
@@ -124,7 +124,7 @@ func ForgotPassword(c *fiber.Ctx) {
 		Email: input.Email,
 	}
 
-	members, err := db.ListData(&member)
+	members, err := db.ListData(&member, nil)
 	if err != nil {
 		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		return

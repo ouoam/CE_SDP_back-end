@@ -9,7 +9,7 @@ import (
 
 func TourRoute(route *fiber.Group) {
 	route.Get("/:id", parseIntParams("id"), func(c *fiber.Ctx) {
-		tour := new(model.TourDetail)
+		tour := new(model.TourDetailSearch)
 		tour.ID.SetValid(c.Locals("params_id").(int64))
 		controller.Get(c, tour)
 	})
@@ -67,7 +67,7 @@ func TourRoute(route *fiber.Group) {
 	})
 
 	route.Get("/", func(c *fiber.Ctx) {
-		tour := new(model.TourDetail)
+		tour := new(model.TourDetailSearch)
 		controller.List(c, tour)
 	})
 }

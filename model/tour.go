@@ -20,7 +20,7 @@ type Tour struct {
 
 // todo check first day will before last day
 
-type TourDetail struct {
+type TourDetailSearch struct {
 	ID			null.Int	`json:"id" key:"p"`
 	Owner		null.Int	`json:"owner"`
 	Name		null.String	`json:"name"`
@@ -40,4 +40,8 @@ type TourDetail struct {
 	BankAccount	null.Int    `json:"bank_account"`
 	BankName  	null.String `json:"bank_name"`
 	List	  	[]string	`json:"list"`
+}
+
+func (tour *TourDetailSearch) CanSearch() bool {
+	return true
 }

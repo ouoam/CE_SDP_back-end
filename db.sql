@@ -399,4 +399,38 @@ $$;
 
 alter function public.listwithtour(integer) owner to postgres;
 
+create function public.tourdetailsearch(keyword text)
+    returns TABLE
+            (
+                id           integer,
+                owner        integer,
+                name         text,
+                description  text,
+                category     text,
+                max_member   integer,
+                first_day    date,
+                last_day     date,
+                price        integer,
+                status       smallint,
+                member       bigint,
+                confirm      bigint,
+                ratting      numeric,
+                favorite     bigint,
+                g_name       text,
+                g_surname    text,
+                bank_account bigint,
+                bank_name    text,
+                list         character varying[]
+            )
+    language sql
+as
+$$
+SELECT *
+FROM tourdetail
+WHERE description LIKE ('%' || $1 || '%')
+   OR name LIKE ('%' || $1 || '%');
+$$;
+
+alter function public.tourdetailsearch(text) owner to postgres;
+
 
