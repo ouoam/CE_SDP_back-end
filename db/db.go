@@ -181,7 +181,7 @@ func UpdateDate(data interface{}) error {
 	return err
 }
 
-func ListData(data interface{}, params... int64) ([]interface{}, error) { // todo filter don't read data
+func ListData(data interface{}, params... interface{}) ([]interface{}, error) { // todo filter don't read data
 	var argsList []interface{}
 	var whereSQL []string
 	var count = 1

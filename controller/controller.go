@@ -14,13 +14,13 @@ import (
 
 var schemaDecoderQuery = schema.NewDecoder()
 
-func GetID(c *fiber.Ctx, dataModel interface{}) {
+func GetID(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
 	if err := model.CheckValidAllPK(dataModel); err != nil {
 		_ = c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		return
 	}
 
-	results, err := db.ListData(dataModel)
+	results, err := db.ListData(dataModel, params...)
 	if err != nil {
 		_ = c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		return
@@ -122,7 +122,7 @@ func PutID(c *fiber.Ctx, dataModel interface{}) {
 	}
 }
 
-func List(c *fiber.Ctx, dataModel interface{}, params... int64) {
+func List(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
 	var getString = func(b []byte) string {
 		return *(*string)(unsafe.Pointer(&b))
 	}

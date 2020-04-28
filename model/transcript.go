@@ -5,9 +5,17 @@ import (
 )
 
 type Transcript struct {
-	Tour		null.Int	`json:"tour" dont:"u" key:"p"`
-	User		null.Int	`json:"user" dont:"u" key:"p"`
-	File		null.String	`json:"file" dont:"u"`
-	Confirm		null.Bool	`json:"confirm"`
-	Time		null.Time	`json:"time"`
+	Tour	null.Int	`json:"tour" dont:"u" key:"p"`
+	User	null.Int	`json:"user" dont:"u" key:"p"`
+	File	null.String	`json:"file" dont:"u"`
+	Confirm	null.Bool	`json:"confirm"`
+	Time	null.Time	`json:"time"`
+}
+
+type TranscriptWithUser struct {
+	Tour	null.Int	`json:"tour" dont:"u" key:"p"`
+	File	null.String	`json:"file" dont:"u"`
+	Confirm	null.Bool	`json:"confirm"`
+	Time	null.Time	`json:"time"`
+	Name	null.String	`json:"name"`
 }

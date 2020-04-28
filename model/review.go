@@ -11,3 +11,11 @@ type Review struct {
 	Ratting	null.Int	`json:"ratting"`
 	Time	null.Time	`json:"time" dont:"c"` //todo update time when update
 }
+
+type ReviewWithUser struct {
+	Tour	null.Int	`json:"tour" dont:"u" key:"p"`
+	Comment	null.String	`json:"comment"`
+	Ratting	null.Int	`json:"ratting"`
+	Time	null.Time	`json:"time" dont:"c"`
+	Name	null.String	`json:"name"`
+}

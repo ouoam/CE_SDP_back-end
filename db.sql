@@ -270,3 +270,44 @@ $$;
 alter function public.messagelistme(integer) owner to postgres;
 
 
+create function public.reviewwithuser("user" integer)
+    returns TABLE
+            (
+                tour    integer,
+                comment text,
+                ratting smallint,
+                "time"  timestamp without time zone,
+                name    text
+            )
+    language sql
+as
+$$
+SELECT r.tour, r.comment, r.ratting, r.time, t.name
+FROM review r
+         LEFT JOIN tour t on r.tour = t.id
+WHERE r."user" = $1
+ORDER BY r.time DESC ;
+$$;
+
+alter function public.reviewwithuser(integer) owner to postgres;
+
+create function public.transcriptwithuser("user" integer)
+    returns TABLE
+            (
+                tour    integer,
+                file    text,
+                confirm boolean,
+                "time"  timestamp without time zone,
+                name    text
+            )
+    language sql
+as
+$$
+SELECT t.tour, t.file, t.confirm, t.time, t2.name
+FROM transcript t
+         LEFT JOIN tour t2 on t.tour = t2.id
+WHERE t."user" = $1
+ORDER BY t.time DESC ;
+$$;
+
+alter function public.transcriptwithuser(integer) owner to postgres;
