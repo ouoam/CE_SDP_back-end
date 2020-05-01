@@ -433,4 +433,21 @@ $$;
 
 alter function public.reviewwithtour(integer) owner to postgres;
 
+create function public.favoritewithuser("user" integer)
+    returns TABLE
+            (
+                tour integer,
+                name text
+            )
+    language sql
+as
+$$
+SELECT f.tour, t.name
+FROM favorite f
+         LEFT JOIN tour t on f.tour = t.id
+WHERE f."user" = $1;
+$$;
+
+alter function public.favoritewithuser(integer) owner to postgres;
+
 
