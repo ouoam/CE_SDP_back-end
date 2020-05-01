@@ -97,6 +97,22 @@ func CheckLogin(c *fiber.Ctx)  {
 				id = int64(val.(float64))
 			}
 			c.Locals("user_id", id)
+
+			member := new(model.Member)
+			member.ID.SetValid(id)
+			members, err := db.ListData(member, nil)
+			if err != nil {
+				_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+				return
+			}
+			if len(members) == 0 {
+				_ = c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+				return
+			}
+			member = members[0].(*model.Member)
+
+			c.Locals("user_data", member)
+
 			c.Next()
 			return
 		} else {
@@ -105,6 +121,16 @@ func CheckLogin(c *fiber.Ctx)  {
 		}
 	}
 	c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+}
+
+func CheckCanGuide(c *fiber.Ctx) {
+	member := c.Locals("user_data").(*model.Member)
+	if !member.Verify.Bool {
+		c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+		return
+	}
+	c.Next()
+	return
 }
 
 func ForgotPassword(c *fiber.Ctx) {
