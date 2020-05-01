@@ -54,14 +54,21 @@ func Get(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
 }
 
 func New(c *fiber.Ctx, dataModel interface{}) {
-	// todo store pk and restore or valid
-
-	if err := c.BodyParser(dataModel); err != nil {
+	v := reflect.ValueOf(dataModel).Elem()
+	result := reflect.New(v.Type()).Interface()
+	if err := c.BodyParser(result); err != nil {
 		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		return
 	}
 
-	v := reflect.ValueOf(dataModel)
+	stv2 := reflect.ValueOf(result).Elem()
+	for i := 0; i < stv2.NumField(); i++ {
+		if v.Type().Field(i).Tag.Get("key") != "p" {
+			nvField := v.Field(i)
+			nvField.Set(stv2.Field(i))
+		}
+	}
+
 	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPreChange)(nil)).Elem()); isImpl {
 		_ = dataModel.(model.WithPreChange).PreChange(true)
 	}
@@ -92,14 +99,21 @@ func New(c *fiber.Ctx, dataModel interface{}) {
 }
 
 func Update(c *fiber.Ctx, dataModel interface{}) {
-	// todo store pk and restore or valid
-
-	if err := c.BodyParser(dataModel); err != nil {
+	v := reflect.ValueOf(dataModel).Elem()
+	result := reflect.New(v.Type()).Interface()
+	if err := c.BodyParser(result); err != nil {
 		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		return
 	}
 
-	v := reflect.ValueOf(dataModel)
+	stv2 := reflect.ValueOf(result).Elem()
+	for i := 0; i < stv2.NumField(); i++ {
+		if v.Type().Field(i).Tag.Get("key") != "p" {
+			nvField := v.Field(i)
+			nvField.Set(stv2.Field(i))
+		}
+	}
+
 	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPreChange)(nil)).Elem()); isImpl {
 		_ = dataModel.(model.WithPreChange).PreChange(false)
 	}
@@ -130,8 +144,6 @@ func Update(c *fiber.Ctx, dataModel interface{}) {
 }
 
 func Delete(c *fiber.Ctx, dataModel interface{}) {
-	// todo store pk and restore or valid
-
 	if err := db.DeleteDate(dataModel); err != nil {
 		_ = c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		return
