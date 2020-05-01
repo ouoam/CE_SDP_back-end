@@ -27,6 +27,7 @@ func Init() {
 
 	app.Post("/login", controller.Login)
 	app.Post("/forgot", controller.ForgotPassword)
+	app.Post("/reset", controller.Reset)
 
 	// known issues : 	use base64 as filename
 	//					and windows is ignore case-sensitive
