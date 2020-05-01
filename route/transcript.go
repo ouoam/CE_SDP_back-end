@@ -27,6 +27,13 @@ func TranscriptRoute(route *fiber.Group) {
 		controller.Update(c, transcript)
 	})
 
+	route.Delete("/:id", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {
+		transcript := new(model.Transcript)
+		transcript.Tour.SetValid(c.Locals("params_id").(int64))
+		transcript.User.SetValid(c.Locals("user_id").(int64))
+		controller.Delete(c, transcript)
+	})
+
 	route.Get("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		transcript := new(model.TranscriptWithUser)
 		controller.List(c, transcript, c.Locals("user_id").(int64))

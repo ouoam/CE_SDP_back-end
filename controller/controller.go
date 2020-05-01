@@ -129,6 +129,17 @@ func Update(c *fiber.Ctx, dataModel interface{}) {
 	}
 }
 
+func Delete(c *fiber.Ctx, dataModel interface{}) {
+	// todo store pk and restore or valid
+
+	if err := db.DeleteDate(dataModel); err != nil {
+		_ = c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		return
+	}
+
+	c.JSON(fiber.Map{"status": "ok"})
+}
+
 func List(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
 	var getString = func(b []byte) string {
 		return *(*string)(unsafe.Pointer(&b))

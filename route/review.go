@@ -27,6 +27,13 @@ func ReviewRoute(route *fiber.Group) {
 		controller.Update(c, review)
 	})
 
+	route.Delete("/:id", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {
+		review := new(model.Review)
+		review.Tour.SetValid(c.Locals("params_id").(int64))
+		review.User.SetValid(c.Locals("user_id").(int64))
+		controller.Delete(c, review)
+	})
+
 	route.Get("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		review := new(model.ReviewWithUser)
 		controller.List(c, review, c.Locals("user_id").(int64))

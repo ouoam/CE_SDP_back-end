@@ -17,6 +17,7 @@ func Init() {
 		http.MethodGet,
 		http.MethodPost,
 		http.MethodPut,
+		http.MethodDelete,
 	}}
 
 	app.Use(cors.New(config))

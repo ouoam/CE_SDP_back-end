@@ -13,6 +13,13 @@ func FavoriteRoute(route *fiber.Group) {
 		controller.Get(c, favorite, c.Locals("user_id").(int64))
 	})
 
+	route.Delete("/:id", controller.CheckLogin, parseIntParams("id"), func(c *fiber.Ctx) {
+		favorite := new(model.Favorite)
+		favorite.Tour.SetValid(c.Locals("params_id").(int64))
+		favorite.User.SetValid(c.Locals("user_id").(int64))
+		controller.Delete(c, favorite)
+	})
+
 	route.Post("/", controller.CheckLogin, func(c *fiber.Ctx) {
 		favorite := new(model.Favorite)
 		favorite.User.SetValid(c.Locals("user_id").(int64))
