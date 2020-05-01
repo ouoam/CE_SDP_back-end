@@ -9,6 +9,7 @@ type Favorite struct {
 	Tour	null.Int	`json:"tour" dont:"u" key:"p"`
 }
 
-func (favorite *Favorite) SetID(id int64)  {
-	favorite.Tour.SetValid(id)
+type FavoriteWithUser struct {
+	Tour	null.Int	`json:"tour"`
+	Name	null.String	`json:"name"`
 }

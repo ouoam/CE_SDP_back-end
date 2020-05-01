@@ -41,6 +41,7 @@ func Init() {
 	TourRoute(app.Group("/tours"))
 	TranscriptRoute(app.Group("/transcripts"))
 	MessageRoute(app.Group("/messages"))
+	FavoriteRoute(app.Group("/favorites"))
 
 	err := app.Listen(3000)
 	if err != nil {
