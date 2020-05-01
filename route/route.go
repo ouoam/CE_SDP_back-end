@@ -28,6 +28,12 @@ func Init() {
 	app.Post("/login", controller.Login)
 	app.Post("/forgot", controller.ForgotPassword)
 
+	// known issues : 	use base64 as filename
+	//					and windows is ignore case-sensitive
+	//					but linux is case-sensitive
+	app.Static("/pic", "./pic")
+	app.Post("/upload", controller.CheckLogin, controller.Upload)
+
 	MemberRoute(app.Group("/members"))
 	PlaceRoute(app.Group("/places"))
 	ReviewRoute(app.Group("/reviews"))
