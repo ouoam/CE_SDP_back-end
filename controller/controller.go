@@ -69,8 +69,11 @@ func New(c *fiber.Ctx, dataModel interface{}) {
 		}
 	}
 
-	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPreChange)(nil)).Elem()); isImpl {
-		_ = dataModel.(model.WithPreChange).PreChange(true)
+	if data, ok := dataModel.(model.WithPreChange); ok {
+		if err := data.PreChange(true); err != nil {
+			c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return
+		}
 	}
 
 	if err := db.AddData(dataModel); err != nil {
@@ -114,8 +117,11 @@ func Update(c *fiber.Ctx, dataModel interface{}) {
 		}
 	}
 
-	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPreChange)(nil)).Elem()); isImpl {
-		_ = dataModel.(model.WithPreChange).PreChange(false)
+	if data, ok := dataModel.(model.WithPreChange); ok {
+		if err := data.PreChange(false); err != nil {
+			c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return
+		}
 	}
 
 	if err := db.UpdateDate(dataModel); err != nil {
