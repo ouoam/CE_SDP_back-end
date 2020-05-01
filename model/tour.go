@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/pkg/errors"
 	"gopkg.in/guregu/null.v3"
 )
 
@@ -18,7 +19,15 @@ type Tour struct {
 	Pic			null.String	`json:"pic"`
 }
 
-// todo check first day will before last day
+func (tour *Tour) PreChange(isNew bool) error {
+	if !tour.FirstDay.Valid || !tour.LastDay.Valid {
+		return errors.New("first day and last day is requires")
+	}
+	if tour.FirstDay.Time.After(tour.LastDay.Time) {
+		return errors.New("first day is after last day")
+	}
+	return nil
+}
 
 type TourDetailSearch struct {
 	ID			null.Int	`json:"id" key:"p"`
