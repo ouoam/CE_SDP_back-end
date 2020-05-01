@@ -212,7 +212,7 @@ func DeleteDate(data interface{}) error {
 	return err
 }
 
-func ListData(data interface{}, filter *Filter, params... interface{}) ([]interface{}, error) { // todo filter don't read data
+func ListData(data interface{}, filter *Filter, params... interface{}) ([]interface{}, error) {
 	var argsList []interface{}
 	var whereSQL []string
 	var count = 1

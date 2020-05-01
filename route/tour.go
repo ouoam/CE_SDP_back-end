@@ -59,7 +59,6 @@ func TourRoute(route *fiber.Group) {
 	})
 
 	route.Put("/:id", controller.CheckLogin, controller.CheckCanGuide, parseIntParams("id"), func(c *fiber.Ctx) {
-		// todo update own
 		tour := new(model.Tour)
 		tour.ID.SetValid(c.Locals("params_id").(int64))
 		tour.Owner.SetValid(c.Locals("user_id").(int64))

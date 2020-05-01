@@ -19,7 +19,6 @@ func MemberRoute(route *fiber.Group) {
 	})
 
 	route.Put("/", controller.CheckLogin, func(c *fiber.Ctx) {
-		// todo check update own
 		member := new(model.Member)
 		member.ID.SetValid(c.Locals("user_id").(int64))
 		controller.Update(c, member)

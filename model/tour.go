@@ -6,7 +6,7 @@ import (
 
 type Tour struct {
 	ID			null.Int	`json:"id" dont:"cu" key:"p"`
-	Owner		null.Int	`json:"owner" dont:"u"`
+	Owner		null.Int	`json:"owner" dont:"u" key:"p"` // use key p for check is owner
 	Name		null.String	`json:"name"`
 	Description	null.String	`json:"description"`
 	Category	null.String	`json:"category"`
