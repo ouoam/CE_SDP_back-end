@@ -38,11 +38,11 @@ func Init() {
 
 	MemberRoute(app.Group("/members"))
 	PlaceRoute(app.Group("/places"))
-	ReviewRoute(app.Group("/reviews"))
+	ReviewRoute(app.Group("/reviews", controller.CheckLogin))
 	TourRoute(app.Group("/tours"))
-	TranscriptRoute(app.Group("/transcripts"))
-	MessageRoute(app.Group("/messages"))
-	FavoriteRoute(app.Group("/favorites"))
+	TranscriptRoute(app.Group("/transcripts", controller.CheckLogin))
+	MessageRoute(app.Group("/messages", controller.CheckLogin))
+	FavoriteRoute(app.Group("/favorites", controller.CheckLogin))
 
 	err := app.Listen(3000)
 	if err != nil {
