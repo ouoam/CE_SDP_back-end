@@ -17,6 +17,7 @@ func Init() {
 		http.MethodGet,
 		http.MethodPost,
 		http.MethodPut,
+		http.MethodDelete,
 	}}
 
 	app.Use(cors.New(config))
@@ -27,13 +28,21 @@ func Init() {
 
 	app.Post("/login", controller.Login)
 	app.Post("/forgot", controller.ForgotPassword)
+	app.Post("/reset", controller.Reset)
+
+	// known issues : 	use base64 as filename
+	//					and windows is ignore case-sensitive
+	//					but linux is case-sensitive
+	app.Static("/pic", "./pic")
+	app.Post("/upload", controller.CheckLogin, controller.Upload)
 
 	MemberRoute(app.Group("/members"))
 	PlaceRoute(app.Group("/places"))
-	ReviewRoute(app.Group("/reviews"))
+	ReviewRoute(app.Group("/reviews", controller.CheckLogin))
 	TourRoute(app.Group("/tours"))
-	TranscriptRoute(app.Group("/transcripts"))
-	MessageRoute(app.Group("/messages"))
+	TranscriptRoute(app.Group("/transcripts", controller.CheckLogin))
+	MessageRoute(app.Group("/messages", controller.CheckLogin))
+	FavoriteRoute(app.Group("/favorites", controller.CheckLogin))
 
 	err := app.Listen(3000)
 	if err != nil {

@@ -7,7 +7,7 @@ import (
 type Transcript struct {
 	Tour	null.Int	`json:"tour" dont:"u" key:"p"`
 	User	null.Int	`json:"user" dont:"u" key:"p"`
-	File	null.String	`json:"file" dont:"u"`
+	File	null.String	`json:"file"`
 	Confirm	null.Bool	`json:"confirm"`
 	Time	null.Time	`json:"time"`
 }

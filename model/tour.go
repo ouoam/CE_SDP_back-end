@@ -1,12 +1,14 @@
 package model
 
 import (
+	"github.com/pkg/errors"
 	"gopkg.in/guregu/null.v3"
+	"time"
 )
 
 type Tour struct {
 	ID			null.Int	`json:"id" dont:"cu" key:"p"`
-	Owner		null.Int	`json:"owner" dont:"u"`
+	Owner		null.Int	`json:"owner" dont:"u" key:"p"` // use key p for check is owner
 	Name		null.String	`json:"name"`
 	Description	null.String	`json:"description"`
 	Category	null.String	`json:"category"`
@@ -18,7 +20,18 @@ type Tour struct {
 	Pic			null.String	`json:"pic"`
 }
 
-// todo check first day will before last day
+func (tour *Tour) PreChange(isNew bool) error {
+	if !tour.FirstDay.Valid || !tour.LastDay.Valid {
+		return errors.New("first day and last day is requires")
+	}
+	if tour.FirstDay.Time.After(tour.LastDay.Time) {
+		return errors.New("first day is after last day")
+	}
+	if tour.FirstDay.Time.Before(time.Now()) {
+		return errors.New("first day is before now")
+	}
+	return nil
+}
 
 type TourDetailSearch struct {
 	ID			null.Int	`json:"id" key:"p"`

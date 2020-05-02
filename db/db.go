@@ -171,7 +171,48 @@ func UpdateDate(data interface{}) error {
 	return err
 }
 
-func ListData(data interface{}, filter *Filter, params... interface{}) ([]interface{}, error) { // todo filter don't read data
+func DeleteDate(data interface{}) error {
+	var whereVal []interface{}
+	var whereSQL []string
+	var count = 1
+
+	stv := reflect.ValueOf(data).Elem()
+	for i := 0; i < stv.NumField(); i++ {
+		fieldType := stv.Type().Field(i)
+		field := stv.Field(i)
+		if !field.CanInterface() {
+			continue
+		}
+		v := field.Addr().Interface()
+		valid := CheckValid(v)
+		column := EscapeReserveWord(fieldType.Tag.Get("json"))
+		key := fieldType.Tag.Get("key")
+		if key == "p" {
+			if valid {
+				whereSQL = append(whereSQL, column)
+				whereVal = append(whereVal, v)
+			} else {
+				return errors.New("require key invalid")
+			}
+		}
+	}
+
+	if len(whereSQL) == 0 {
+		return errors.New("no where statement")
+	}
+	for i := range whereSQL{
+		whereSQL[i] += " = $" + strconv.Itoa(count)
+		count++
+	}
+
+	statement := "DELETE FROM public." + strings.ToLower(reflect.TypeOf(data).Elem().Name())
+	statement += " WHERE " + strings.Join(whereSQL, " AND ")
+
+	_, err := db.Exec(statement, whereVal...)
+	return err
+}
+
+func ListData(data interface{}, filter *Filter, params... interface{}) ([]interface{}, error) {
 	var argsList []interface{}
 	var whereSQL []string
 	var count = 1

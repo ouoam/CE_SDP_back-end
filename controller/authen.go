@@ -97,6 +97,22 @@ func CheckLogin(c *fiber.Ctx)  {
 				id = int64(val.(float64))
 			}
 			c.Locals("user_id", id)
+
+			member := new(model.Member)
+			member.ID.SetValid(id)
+			members, err := db.ListData(member, nil)
+			if err != nil {
+				_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+				return
+			}
+			if len(members) == 0 {
+				_ = c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+				return
+			}
+			member = members[0].(*model.Member)
+
+			c.Locals("user_data", member)
+
 			c.Next()
 			return
 		} else {
@@ -105,6 +121,16 @@ func CheckLogin(c *fiber.Ctx)  {
 		}
 	}
 	c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+}
+
+func CheckCanGuide(c *fiber.Ctx) {
+	member := c.Locals("user_data").(*model.Member)
+	if !member.Verify.Bool {
+		c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+		return
+	}
+	c.Next()
+	return
 }
 
 func ForgotPassword(c *fiber.Ctx) {
@@ -180,4 +206,92 @@ func ForgotPassword(c *fiber.Ctx) {
 	}
 
 	_ = c.JSON(fiber.Map{"success": "Reset code send to your E-mail"})
+}
+
+type resetReq struct {
+	Code		string	`json:"code"`
+	Password	string	`json:"password"`
+}
+
+func Reset(c *fiber.Ctx) {
+	input := new(resetReq)
+	if err := c.BodyParser(input); err != nil {
+		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+		return
+	}
+
+	if input.Code == "" || input.Password == "" {
+		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Please enter code and password"})
+		return
+	}
+
+	token, err := jwt.Parse(input.Code, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
+		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+		return []byte(os.Getenv("SECRET_KEY")), nil
+	})
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		var id, exp int64
+		var pass, user string
+		if val, ok := claims["r"]; !ok {
+			c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+			return
+		} else {
+			id = int64(val.(float64))
+		}
+		if val, ok := claims["u"]; !ok {
+			c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+			return
+		} else {
+			user = val.(string)
+		}
+		if val, ok := claims["c"]; !ok {
+			c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+			return
+		} else {
+			pass = val.(string)
+		}
+		if val, ok := claims["exp"]; !ok {
+			c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+			return
+		} else {
+			exp = int64(val.(float64))
+		}
+
+		member := new(model.Member)
+		member.Username.SetValid(user)
+		member.ID.SetValid(id)
+
+		members, err := db.ListData(member, nil)
+		if err != nil {
+			_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return
+		}
+		if len(members) == 0 {
+			_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": "Username or E-mail or Password incorrect."})
+			return
+		}
+
+		member = members[0].(*model.Member)
+
+		tm := exp % 17 + 5
+		password := member.Password.String
+		password = password[tm: tm + 5]
+
+		if pass != password {
+			c.Status(http.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+			return
+		}
+
+		member.Password.SetValid(input.Password)
+		Update(c, member)
+	} else {
+		c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err})
+		return
+	}
 }
