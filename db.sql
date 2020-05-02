@@ -125,7 +125,7 @@ create table public.transcript
             references public.member,
     file    varchar,
     confirm boolean default false not null,
-    time    timestamp             not null,
+    time    timestamp,
     constraint transcript_pk
         primary key (tour, "user")
 );
