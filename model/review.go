@@ -2,7 +2,6 @@ package model
 
 import (
 	"gopkg.in/guregu/null.v3"
-	"time"
 )
 
 type Review struct {
@@ -10,14 +9,7 @@ type Review struct {
 	User	null.Int	`json:"user" dont:"u" key:"p"`
 	Comment	null.String	`json:"comment"`
 	Ratting	null.Int	`json:"ratting"`
-	Time	null.Time	`json:"time" dont:"c"`
-}
-
-func (review *Review) PreChange(isNew bool) error {
-	if !isNew {
-		review.Time.SetValid(time.Now())
-	}
-	return nil
+	Time	null.Time	`json:"time" dont:"c"` //todo update time when update
 }
 
 type ReviewWithUser struct {

@@ -2,7 +2,6 @@ package main
 
 import (
 	_ "github.com/dgrijalva/jwt-go"
-	_ "github.com/disintegration/imaging"
 	_ "github.com/gofiber/cors"
 	_ "github.com/gofiber/fiber"
 	_ "github.com/jinzhu/copier"

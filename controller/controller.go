@@ -43,11 +43,8 @@ func Get(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
 
 	_ = copier.Copy(dataModel, results[0])
 
-	if data, ok := dataModel.(model.WithPostGet); ok {
-		if err := data.PostGet(); err != nil {
-			c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-			return
-		}
+	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPostGet)(nil)).Elem()); isImpl {
+		_ = dataModel.(model.WithPostGet).PostGet()
 	}
 
 	if err := c.JSON(dataModel); err != nil {
@@ -57,26 +54,16 @@ func Get(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
 }
 
 func New(c *fiber.Ctx, dataModel interface{}) {
-	v := reflect.ValueOf(dataModel).Elem()
-	result := reflect.New(v.Type()).Interface()
-	if err := c.BodyParser(result); err != nil {
+	// todo store pk and restore or valid
+
+	if err := c.BodyParser(dataModel); err != nil {
 		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		return
 	}
 
-	stv2 := reflect.ValueOf(result).Elem()
-	for i := 0; i < stv2.NumField(); i++ {
-		if v.Type().Field(i).Tag.Get("key") != "p" {
-			nvField := v.Field(i)
-			nvField.Set(stv2.Field(i))
-		}
-	}
-
-	if data, ok := dataModel.(model.WithPreChange); ok {
-		if err := data.PreChange(true); err != nil {
-			c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-			return
-		}
+	v := reflect.ValueOf(dataModel)
+	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPreChange)(nil)).Elem()); isImpl {
+		_ = dataModel.(model.WithPreChange).PreChange(true)
 	}
 
 	if err := db.AddData(dataModel); err != nil {
@@ -94,11 +81,8 @@ func New(c *fiber.Ctx, dataModel interface{}) {
 		return
 	}
 
-	if data, ok := dataModel.(model.WithPostGet); ok {
-		if err := data.PostGet(); err != nil {
-			c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-			return
-		}
+	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPostGet)(nil)).Elem()); isImpl {
+		_ = dataModel.(model.WithPostGet).PostGet()
 	}
 
 	if err := c.JSON(dataModel); err != nil {
@@ -108,26 +92,16 @@ func New(c *fiber.Ctx, dataModel interface{}) {
 }
 
 func Update(c *fiber.Ctx, dataModel interface{}) {
-	v := reflect.ValueOf(dataModel).Elem()
-	result := reflect.New(v.Type()).Interface()
-	if err := c.BodyParser(result); err != nil {
+	// todo store pk and restore or valid
+
+	if err := c.BodyParser(dataModel); err != nil {
 		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		return
 	}
 
-	stv2 := reflect.ValueOf(result).Elem()
-	for i := 0; i < stv2.NumField(); i++ {
-		if v.Type().Field(i).Tag.Get("key") != "p" {
-			nvField := v.Field(i)
-			nvField.Set(stv2.Field(i))
-		}
-	}
-
-	if data, ok := dataModel.(model.WithPreChange); ok {
-		if err := data.PreChange(false); err != nil {
-			c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-			return
-		}
+	v := reflect.ValueOf(dataModel)
+	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPreChange)(nil)).Elem()); isImpl {
+		_ = dataModel.(model.WithPreChange).PreChange(false)
 	}
 
 	if err := db.UpdateDate(dataModel); err != nil {
@@ -145,26 +119,14 @@ func Update(c *fiber.Ctx, dataModel interface{}) {
 		return
 	}
 
-	if data, ok := dataModel.(model.WithPostGet); ok {
-		if err := data.PostGet(); err != nil {
-			c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-			return
-		}
+	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPostGet)(nil)).Elem()); isImpl {
+		_ = dataModel.(model.WithPostGet).PostGet()
 	}
 
 	if err := c.JSON(dataModel); err != nil {
 		c.Status(http.StatusInternalServerError).Send(err)
 		return
 	}
-}
-
-func Delete(c *fiber.Ctx, dataModel interface{}) {
-	if err := db.DeleteDate(dataModel); err != nil {
-		_ = c.Status(http.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-		return
-	}
-
-	c.JSON(fiber.Map{"status": "ok"})
 }
 
 func List(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
@@ -216,12 +178,9 @@ func List(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
 		return
 	}
 
-	if _, ok := dataModel.(model.WithPostGet); ok {
+	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPostGet)(nil)).Elem()); isImpl {
 		for i := range results {
-			if err := results[i].(model.WithPostGet).PostGet(); err != nil {
-				c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-				return
-			}
+			_ = results[i].(model.WithPostGet).PostGet()
 		}
 	}
 
