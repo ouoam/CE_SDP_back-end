@@ -58,17 +58,19 @@ func Get(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
 
 func New(c *fiber.Ctx, dataModel interface{}) {
 	v := reflect.ValueOf(dataModel).Elem()
-	result := reflect.New(v.Type()).Interface()
-	if err := c.BodyParser(result); err != nil {
-		_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-		return
-	}
+	if len(c.Fasthttp.Request.Body()) != 0 {
+		result := reflect.New(v.Type()).Interface()
+		if err := c.BodyParser(result); err != nil {
+			_ = c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return
+		}
 
-	stv2 := reflect.ValueOf(result).Elem()
-	for i := 0; i < stv2.NumField(); i++ {
-		if v.Type().Field(i).Tag.Get("key") != "p" {
-			nvField := v.Field(i)
-			nvField.Set(stv2.Field(i))
+		stv2 := reflect.ValueOf(result).Elem()
+		for i := 0; i < stv2.NumField(); i++ {
+			if v.Type().Field(i).Tag.Get("key") != "p" {
+				nvField := v.Field(i)
+				nvField.Set(stv2.Field(i))
+			}
 		}
 	}
 
