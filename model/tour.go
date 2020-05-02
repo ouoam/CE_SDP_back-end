@@ -3,6 +3,7 @@ package model
 import (
 	"github.com/pkg/errors"
 	"gopkg.in/guregu/null.v3"
+	"time"
 )
 
 type Tour struct {
@@ -25,6 +26,9 @@ func (tour *Tour) PreChange(isNew bool) error {
 	}
 	if tour.FirstDay.Time.After(tour.LastDay.Time) {
 		return errors.New("first day is after last day")
+	}
+	if tour.FirstDay.Time.Before(time.Now()) {
+		return errors.New("first day is before now")
 	}
 	return nil
 }
