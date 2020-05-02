@@ -43,8 +43,11 @@ func Get(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
 
 	_ = copier.Copy(dataModel, results[0])
 
-	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPostGet)(nil)).Elem()); isImpl {
-		_ = dataModel.(model.WithPostGet).PostGet()
+	if data, ok := dataModel.(model.WithPostGet); ok {
+		if err := data.PostGet(); err != nil {
+			c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return
+		}
 	}
 
 	if err := c.JSON(dataModel); err != nil {
@@ -91,8 +94,11 @@ func New(c *fiber.Ctx, dataModel interface{}) {
 		return
 	}
 
-	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPostGet)(nil)).Elem()); isImpl {
-		_ = dataModel.(model.WithPostGet).PostGet()
+	if data, ok := dataModel.(model.WithPostGet); ok {
+		if err := data.PostGet(); err != nil {
+			c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return
+		}
 	}
 
 	if err := c.JSON(dataModel); err != nil {
@@ -139,8 +145,11 @@ func Update(c *fiber.Ctx, dataModel interface{}) {
 		return
 	}
 
-	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPostGet)(nil)).Elem()); isImpl {
-		_ = dataModel.(model.WithPostGet).PostGet()
+	if data, ok := dataModel.(model.WithPostGet); ok {
+		if err := data.PostGet(); err != nil {
+			c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+			return
+		}
 	}
 
 	if err := c.JSON(dataModel); err != nil {
@@ -207,9 +216,12 @@ func List(c *fiber.Ctx, dataModel interface{}, params... interface{}) {
 		return
 	}
 
-	if isImpl := v.Type().Implements(reflect.TypeOf((*model.WithPostGet)(nil)).Elem()); isImpl {
+	if _, ok := dataModel.(model.WithPostGet); ok {
 		for i := range results {
-			_ = results[i].(model.WithPostGet).PostGet()
+			if err := results[i].(model.WithPostGet).PostGet(); err != nil {
+				c.Status(http.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+				return
+			}
 		}
 	}
 
