@@ -44,6 +44,7 @@ type TourDetailSearch struct {
 	LastDay   	null.Time   `json:"last_day"`
 	Price     	null.Int    `json:"price"`
 	Status    	null.Int    `json:"status"`
+	Pic			null.String	`json:"pic"`
 	Member    	null.Int    `json:"member"`
 	Confirm   	null.Int    `json:"confirm"`
 	Ratting   	null.Float  `json:"ratting"`

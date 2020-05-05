@@ -171,8 +171,8 @@ alter table public.favorite
     owner to postgres;
 
 create view public.tourdetail
-            (id, owner, name, description, category, max_member, first_day, last_day, price, status, member, confirm,
-             ratting, favorite, g_name, g_surname, bank_account, bank_name, list)
+            (id, owner, name, description, category, max_member, first_day, last_day, price, status, pic, member,
+             confirm, ratting, favorite, g_name, g_surname, bank_account, bank_name, list)
 as
 SELECT tu.id,
        tu.owner,
@@ -184,6 +184,7 @@ SELECT tu.id,
        tu.last_day,
        tu.price,
        tu.status,
+       tu.pic,
        COALESCE(ts.member, 0::bigint)  AS member,
        COALESCE(ts.confirm, 0::bigint) AS confirm,
        COALESCE(r.ratting, 0::numeric) AS ratting,
@@ -242,34 +243,6 @@ $$;
 
 alter function public.messagewithme(integer, integer) owner to postgres;
 
-create function public.messagelistme(me integer)
-    returns TABLE
-            (
-                contact integer,
-                me      boolean,
-                message text,
-                "time"  timestamp without time zone,
-                name    text,
-                surname text,
-                pic     text
-            )
-    language sql
-as
-$$
-SELECT DISTINCT ON (a.contact) a.*, m.name, m.surname, m.pic
-FROM (SELECT case when "from" = $1 then "to" else "from" end as contact,
-             case when "from" = $1 then true else false end  as me,
-             message.message,
-             time
-      FROM message
-      WHERE "from" = $1
-         OR "to" = $1
-      ORDER BY time DESC) as a
-         LEFT JOIN member as m ON m.id = a.contact;
-$$;
-
-alter function public.messagelistme(integer) owner to postgres;
-
 create function public.listupdate(tour integer, list integer[]) returns integer
     language plpgsql
 as
@@ -314,70 +287,6 @@ $$;
 
 alter function public.reviewwithuser(integer) owner to postgres;
 
-create function public.transcriptwithuser("user" integer)
-    returns TABLE
-            (
-                tour    integer,
-                file    text,
-                confirm boolean,
-                "time"  timestamp without time zone,
-                name    text
-            )
-    language sql
-as
-$$
-SELECT t.tour, t.file, t.confirm, t.time, t2.name
-FROM transcript t
-         LEFT JOIN tour t2 on t.tour = t2.id
-WHERE t."user" = $1
-ORDER BY t.time DESC ;
-$$;
-
-alter function public.transcriptwithuser(integer) owner to postgres;
-
-create function public.transcriptwithtour(tour integer)
-    returns TABLE
-            (
-                "user"  integer,
-                file    text,
-                confirm boolean,
-                "time"  timestamp without time zone,
-                name    text,
-                surname text
-            )
-    language sql
-as
-$$
-SELECT t."user", t.file, t.confirm, t.time, m.name, m.surname
-FROM transcript t
-         LEFT JOIN member m on t."user" = m.id
-WHERE t.tour = $1
-ORDER BY t.time DESC ;
-$$;
-
-alter function public.transcriptwithtour(integer) owner to postgres;
-
-create function public.listwithtour(tour integer)
-    returns TABLE
-            (
-                id   integer,
-                name text,
-                pic  text,
-                lat  double precision,
-                lon  double precision
-            )
-    language sql
-as
-$$
-SELECT p.*
-FROM list l
-         LEFT JOIN place p on l.place = p.id
-WHERE l.tour = $1
-ORDER BY l.seq;
-$$;
-
-alter function public.listwithtour(integer) owner to postgres;
-
 create function public.reviewwithtour(tour integer)
     returns TABLE
             (
@@ -417,6 +326,74 @@ $$;
 
 alter function public.favoritewithuser(integer) owner to postgres;
 
+create function public.placesearch(keyword text)
+    returns TABLE
+            (
+                id   integer,
+                name text,
+                pic  character,
+                lat  double precision,
+                lon  double precision
+            )
+    language sql
+as
+$$
+SELECT *
+FROM place
+WHERE name LIKE ('%' || $1 || '%');
+$$;
+
+alter function public.placesearch(text) owner to postgres;
+
+create function public.messagelistme(me integer)
+    returns TABLE
+            (
+                contact integer,
+                me      boolean,
+                message text,
+                "time"  timestamp without time zone,
+                name    text,
+                surname text,
+                pic     character
+            )
+    language sql
+as
+$$
+SELECT DISTINCT ON (a.contact) a.*, m.name, m.surname, m.pic
+FROM (SELECT case when "from" = $1 then "to" else "from" end as contact,
+             case when "from" = $1 then true else false end  as me,
+             message.message,
+             time
+      FROM message
+      WHERE "from" = $1
+         OR "to" = $1
+      ORDER BY time DESC) as a
+         LEFT JOIN member as m ON m.id = a.contact;
+$$;
+
+alter function public.messagelistme(integer) owner to postgres;
+
+create function public.listwithtour(tour integer)
+    returns TABLE
+            (
+                id   integer,
+                name text,
+                pic  character,
+                lat  double precision,
+                lon  double precision
+            )
+    language sql
+as
+$$
+SELECT p.*
+FROM list l
+         LEFT JOIN place p on l.place = p.id
+WHERE l.tour = $1
+ORDER BY l.seq;
+$$;
+
+alter function public.listwithtour(integer) owner to postgres;
+
 create function public.tourdetailsearch(keyword text)
     returns TABLE
             (
@@ -430,6 +407,7 @@ create function public.tourdetailsearch(keyword text)
                 last_day     timestamp without time zone,
                 price        integer,
                 status       smallint,
+                pic          character,
                 member       bigint,
                 confirm      bigint,
                 ratting      numeric,
@@ -452,23 +430,47 @@ $$;
 
 alter function public.tourdetailsearch(text) owner to postgres;
 
-create function public.placesearch(keyword text)
+create function public.transcriptwithuser("user" integer)
     returns TABLE
             (
-                id   integer,
-                name text,
-                pic  character,
-                lat  double precision,
-                lon  double precision
+                tour    integer,
+                file    character,
+                confirm boolean,
+                "time"  timestamp without time zone,
+                name    text
             )
     language sql
 as
 $$
-SELECT *
-FROM place
-WHERE name LIKE ('%' || $1 || '%');
+SELECT t.tour, t.file, t.confirm, t.time, t2.name
+FROM transcript t
+         LEFT JOIN tour t2 on t.tour = t2.id
+WHERE t."user" = $1
+ORDER BY t.time DESC ;
 $$;
 
-alter function public.placesearch(text) owner to postgres;
+alter function public.transcriptwithuser(integer) owner to postgres;
+
+create function public.transcriptwithtour(tour integer)
+    returns TABLE
+            (
+                "user"  integer,
+                file    character,
+                confirm boolean,
+                "time"  timestamp without time zone,
+                name    text,
+                surname text
+            )
+    language sql
+as
+$$
+SELECT t."user", t.file, t.confirm, t.time, m.name, m.surname
+FROM transcript t
+         LEFT JOIN member m on t."user" = m.id
+WHERE t.tour = $1
+ORDER BY t.time DESC ;
+$$;
+
+alter function public.transcriptwithtour(integer) owner to postgres;
 
 
