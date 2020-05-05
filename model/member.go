@@ -20,6 +20,7 @@ type Member struct {
 	Verify		null.Bool	`json:"verify"`
 	Pic			null.String	`json:"pic"`
 	BankName	null.String	`json:"bank_name"`
+	IdCardPic	null.String	`json:"id_card_pic"`
 }
 
 var (

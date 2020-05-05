@@ -25,7 +25,7 @@ func PlaceRoute(route *fiber.Group) {
 	})
 
 	route.Get("/", func(c *fiber.Ctx) {
-		place := new(model.Place)
+		place := new(model.PlaceSearch)
 		controller.List(c, place)
 	})
 }
