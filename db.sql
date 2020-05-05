@@ -12,8 +12,9 @@ create table public.member
     bank_account bigint,
     address      text,
     verify       boolean default false not null,
-    pic          varchar,
-    bank_name    varchar
+    pic          char(43),
+    bank_name    varchar,
+    id_card_pic  char(43)
 );
 
 alter table public.member
@@ -50,21 +51,21 @@ create index message_to_index
 
 create table public.tour
 (
-    id          serial   not null
+    id          serial    not null
         constraint tour_pk
             primary key,
-    owner       integer  not null
+    owner       integer   not null
         constraint tour_member_id_fk
             references public.member,
-    name        varchar  not null,
-    description text     not null,
-    category    varchar  not null,
-    max_member  integer  not null,
-    first_day   date     not null,
-    last_day    date     not null,
-    price       integer  not null,
-    status      smallint not null,
-    pic         varchar
+    name        varchar   not null,
+    description text      not null,
+    category    varchar   not null,
+    max_member  integer   not null,
+    first_day   timestamp not null,
+    last_day    timestamp not null,
+    price       integer   not null,
+    status      smallint  not null,
+    pic         char(43)
 );
 
 alter table public.tour
@@ -76,11 +77,11 @@ create index tour_category_index
 create index tour_description_index
     on public.tour (description);
 
-create index tour_first_day_index
-    on public.tour (first_day);
-
 create index tour_name_index
     on public.tour (name);
+
+create index tour_first_day_index
+    on public.tour (first_day);
 
 create table public.place
 (
@@ -88,7 +89,7 @@ create table public.place
         constraint place_pk
             primary key,
     name varchar          not null,
-    pic  varchar,
+    pic  char(43),
     lat  double precision not null,
     lon  double precision not null
 );
@@ -123,7 +124,7 @@ create table public.transcript
     "user"  integer               not null
         constraint transcript_member_id_fk
             references public.member,
-    file    varchar,
+    file    char(43),
     confirm boolean default false not null,
     time    timestamp,
     constraint transcript_pk
@@ -377,40 +378,6 @@ $$;
 
 alter function public.listwithtour(integer) owner to postgres;
 
-create function public.tourdetailsearch(keyword text)
-    returns TABLE
-            (
-                id           integer,
-                owner        integer,
-                name         text,
-                description  text,
-                category     text,
-                max_member   integer,
-                first_day    date,
-                last_day     date,
-                price        integer,
-                status       smallint,
-                member       bigint,
-                confirm      bigint,
-                ratting      numeric,
-                favorite     bigint,
-                g_name       text,
-                g_surname    text,
-                bank_account bigint,
-                bank_name    text,
-                list         character varying[]
-            )
-    language sql
-as
-$$
-SELECT *
-FROM tourdetail
-WHERE description LIKE ('%' || $1 || '%')
-   OR name LIKE ('%' || $1 || '%');
-$$;
-
-alter function public.tourdetailsearch(text) owner to postgres;
-
 create function public.reviewwithtour(tour integer)
     returns TABLE
             (
@@ -449,5 +416,59 @@ WHERE f."user" = $1;
 $$;
 
 alter function public.favoritewithuser(integer) owner to postgres;
+
+create function public.tourdetailsearch(keyword text)
+    returns TABLE
+            (
+                id           integer,
+                owner        integer,
+                name         text,
+                description  text,
+                category     text,
+                max_member   integer,
+                first_day    timestamp without time zone,
+                last_day     timestamp without time zone,
+                price        integer,
+                status       smallint,
+                member       bigint,
+                confirm      bigint,
+                ratting      numeric,
+                favorite     bigint,
+                g_name       text,
+                g_surname    text,
+                bank_account bigint,
+                bank_name    text,
+                list         character varying[]
+            )
+    language sql
+as
+$$
+SELECT *
+FROM tourdetail
+WHERE description LIKE ('%' || $1 || '%')
+   OR name LIKE ('%' || $1 || '%')
+   OR array_to_string(list, ',') LIKE ('%' || $1 || '%');
+$$;
+
+alter function public.tourdetailsearch(text) owner to postgres;
+
+create function public.placesearch(keyword text)
+    returns TABLE
+            (
+                id   integer,
+                name text,
+                pic  character,
+                lat  double precision,
+                lon  double precision
+            )
+    language sql
+as
+$$
+SELECT *
+FROM place
+WHERE name LIKE ('%' || $1 || '%');
+$$;
+
+alter function public.placesearch(text) owner to postgres;
 
 
