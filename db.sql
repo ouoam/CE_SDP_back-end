@@ -359,16 +359,21 @@ create function public.messagelistme(me integer)
     language sql
 as
 $$
-SELECT DISTINCT ON (a.contact) a.*, m.name, m.surname, m.pic
-FROM (SELECT case when "from" = $1 then "to" else "from" end as contact,
-             case when "from" = $1 then true else false end  as me,
-             message.message,
-             time
-      FROM message
-      WHERE "from" = $1
-         OR "to" = $1
-      ORDER BY time DESC) as a
-         LEFT JOIN member as m ON m.id = a.contact;
+SELECT a.contact, a.me, a.message, a.time, m.name, m.surname, m.pic
+FROM (
+         SELECT case when "from" = $1 then "to" else "from" end as contact,
+                case when "from" = $1 then true else false end  as me,
+                m.message,
+                time,
+                ROW_NUMBER() OVER (PARTITION BY case when "from" = $1 then "to" else "from" end
+                    ORDER BY m.time DESC)                       AS rk
+         FROM message m
+         WHERE "from" = $1
+            OR "to" = $1
+     ) as a
+         LEFT JOIN member as m ON m.id = a.contact
+WHERE a.rk = 1
+ORDER BY a.time DESC;
 $$;
 
 alter function public.messagelistme(integer) owner to postgres;
@@ -425,6 +430,7 @@ SELECT *
 FROM tourdetail
 WHERE description LIKE ('%' || $1 || '%')
    OR name LIKE ('%' || $1 || '%')
+   OR category LIKE ('%' || $1 || '%')
    OR array_to_string(list, ',') LIKE ('%' || $1 || '%');
 $$;
 
